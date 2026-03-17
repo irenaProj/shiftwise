@@ -51,7 +51,7 @@ cp .env.example .env
 
 Edit `.env`:
 ```
-DATABASE_URL="postgresql://postgres:password@localhost:5432/shiftwise"
+DATABASE_URL="postgresql://[USER]:[PASSWORD]@[HOST]/[DBNAME]?sslmode=require"
 JWT_ACCESS_SECRET="run: node -e \"console.log(require('crypto').randomBytes(64).toString('hex'))\""
 JWT_REFRESH_SECRET="run the same command again for a different value"
 FRONTEND_URL="http://localhost:5173"
@@ -107,10 +107,10 @@ npm run dev
 
 ## Deployment guide
 
-### Step 1 — Database (Supabase)
+### Step 1 — Database (Neon)
 
-1. Go to [supabase.com](https://supabase.com) → New project
-2. Settings → Database → **Connection string → URI** → copy it
+1. Go to [neon.tech](neon.tech) → New project
+2. Connection string → copy it
 3. Keep this for Step 2
 
 ### Step 2 — Backend (Railway)
