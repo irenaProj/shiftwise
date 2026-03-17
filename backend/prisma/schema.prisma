@@ -1,0 +1,68 @@
+// This is the "Hello World" schema — just enough to prove the stack works.
+// More tables (shifts, schedules, availability) will be added in later milestones.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  name         String
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  memberships  Membership[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships Membership[]
+
+  @@map("workspaces")
+}
+
+model Membership {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  workspaceId String    @map("workspace_id")
+  role        Role      @default(EMPLOYEE)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@map("memberships")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  EMPLOYEE
+}
