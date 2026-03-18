@@ -17,20 +17,21 @@ A workforce management app where managers can schedule employees, handle shift s
 
 ## Tech stack
 
-| Layer      | Technology                                      |
-|------------|-------------------------------------------------|
-| Frontend   | React 18, TypeScript, Vite, Tailwind CSS        |
-| State      | Zustand (client), TanStack Query (server)       |
-| Backend    | Node.js, Express, TypeScript                    |
-| Database   | PostgreSQL via Prisma ORM                       |
-| Auth       | JWT (access) + httpOnly cookie (refresh)        |
-| Deployment | Vercel (FE) + Render (BE) + Supabase (DB)      |
+| Layer      | Technology                                |
+| ---------- | ----------------------------------------- |
+| Frontend   | React 18, TypeScript, Vite, Tailwind CSS  |
+| State      | Zustand (client), TanStack Query (server) |
+| Backend    | Node.js, Express, TypeScript              |
+| Database   | PostgreSQL via Prisma ORM                 |
+| Auth       | JWT (access) + httpOnly cookie (refresh)  |
+| Deployment | Vercel (FE) + Render (BE) + Supabase (DB) |
 
 ---
 
 ## Local development
 
 ### Prerequisites
+
 - Node.js 20+
 - A PostgreSQL database (local or Supabase free tier)
 
@@ -50,6 +51,7 @@ cp .env.example .env
 ```
 
 Edit `.env`:
+
 ```
 DATABASE_URL="postgresql://[USER]:[PASSWORD]@[HOST]/[DBNAME]?sslmode=require"
 JWT_ACCESS_SECRET="run: node -e \"console.log(require('crypto').randomBytes(64).toString('hex'))\""
@@ -67,10 +69,10 @@ npm run db:seed       # creates demo workspace + users
 ```
 
 Seed creates:
+
 - Workspace: **Demo Cafe**
 - Manager: `manager@demo.com` / `password123`
 - Employees: `alice@demo.com`, `bob@demo.com`, `carol@demo.com` / `password123`
-
 
 ### 4. Run the app
 
@@ -83,26 +85,30 @@ npm run dev
 - Backend: http://localhost:3001
 - Prisma Studio: `cd backend && npm run db:studio`
 
+Click the Ports tab at the bottom of the Codespace
+Find port 5173
+Click the 🌐 globe icon to open it in the browser
+
 ---
 
 ## API reference
 
 ### Auth
 
-| Method | Endpoint             | Body                                   | Description              |
-|--------|----------------------|----------------------------------------|--------------------------|
+| Method | Endpoint             | Body                                     | Description                 |
+| ------ | -------------------- | ---------------------------------------- | --------------------------- |
 | POST   | `/api/auth/register` | `{email, password, name, workspaceName}` | Register + create workspace |
-| POST   | `/api/auth/login`    | `{email, password}`                    | Login, get tokens        |
-| POST   | `/api/auth/refresh`  | —                                      | Rotate refresh token     |
-| POST   | `/api/auth/logout`   | —                                      | Invalidate refresh token |
+| POST   | `/api/auth/login`    | `{email, password}`                      | Login, get tokens           |
+| POST   | `/api/auth/refresh`  | —                                        | Rotate refresh token        |
+| POST   | `/api/auth/logout`   | —                                        | Invalidate refresh token    |
 
 ### Workspaces / Employees
 
-| Method | Endpoint                                      | Auth | Description         |
-|--------|-----------------------------------------------|------|---------------------|
-| GET    | `/api/workspaces/:id/employees`               | ✅   | List all members    |
-| POST   | `/api/workspaces/:id/employees`               | ✅   | Add a team member   |
-| DELETE | `/api/workspaces/:id/employees/:userId`       | ✅   | Remove a member     |
+| Method | Endpoint                                | Auth | Description       |
+| ------ | --------------------------------------- | ---- | ----------------- |
+| GET    | `/api/workspaces/:id/employees`         | ✅   | List all members  |
+| POST   | `/api/workspaces/:id/employees`         | ✅   | Add a team member |
+| DELETE | `/api/workspaces/:id/employees/:userId` | ✅   | Remove a member   |
 
 ---
 
@@ -125,16 +131,17 @@ npm run dev
    - **Start command:** `node dist/index.js`
 5. Add environment variables:
 
-   | Variable | Value |
-   |----------|-------|
-   | `DATABASE_URL` | Your Neon connection string |
-   | `JWT_ACCESS_SECRET` | Random 64-char hex string |
+   | Variable             | Value                               |
+   | -------------------- | ----------------------------------- |
+   | `DATABASE_URL`       | Your Neon connection string         |
+   | `JWT_ACCESS_SECRET`  | Random 64-char hex string           |
    | `JWT_REFRESH_SECRET` | Different random 64-char hex string |
-   | `FRONTEND_URL` | `https://your-app.vercel.app` |
-   | `NODE_ENV` | `production` |
-   | `PORT` | `3001` |
+   | `FRONTEND_URL`       | `https://your-app.vercel.app`       |
+   | `NODE_ENV`           | `production`                        |
+   | `PORT`               | `3001`                              |
 
    Generate JWT secrets with:
+
 ```bash
    node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
@@ -143,7 +150,6 @@ npm run dev
 7. Copy your Render URL (e.g. `https://shiftwise-api.onrender.com`) — you'll need it for the frontend
 
 > **Note:** The free tier spins down after 15 minutes of inactivity and takes ~30 seconds to wake up on the next request. This is fine for a portfolio project.
-
 
 ### Step 3 — Frontend (Vercel)
 
@@ -156,22 +162,27 @@ npm run dev
 4. Deploy
 
 **Important:** Update the Vite proxy. In production, `axios` needs the full API URL. In `frontend/src/lib/api.ts`, change:
+
 ```ts
 // Development (uses Vite proxy):
-baseURL: '/api'
+baseURL: "/api";
 
 // Production (direct to Render):
-baseURL: import.meta.env.VITE_API_URL + '/api'
+baseURL: import.meta.env.VITE_API_URL + "/api";
 ```
 
 Or use this pattern that handles both:
+
 ```ts
-baseURL: import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : '/api'
+baseURL: import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL + "/api"
+  : "/api";
 ```
 
 ### Step 4 — Update CORS
 
 Once you have your Vercel URL, update `FRONTEND_URL` in Render to match exactly:
+
 ```
 FRONTEND_URL=https://shiftwise.vercel.app
 ```
