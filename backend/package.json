@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.11.0",
+    "@shiftwise/dates": "*",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.7",
     "@types/cors": "^2.8.17",
@@ -27,6 +28,5 @@
     "tsx": "^4.7.1",
     "typescript": "^5.4.2",
     "zod": "^3.22.4"
-  },
-  "devDependencies": { }
+  }
 }
