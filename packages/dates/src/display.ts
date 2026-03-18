@@ -5,7 +5,7 @@
 import { UTCDate } from "@date-fns/utc";
 import { tz } from "@date-fns/tz";
 import { format } from "date-fns";
-import type { DateInput, ISOString, TimeString, Timezone } from "./types";
+import type { DateInput, ISOString, TimeString, Timezone } from "./types.ts";
 
 // ── Core formatter ───────────────────────────────────────────────────────────
 

@@ -10,7 +10,7 @@ import {
   parseISO,
   isValid,
 } from 'date-fns'
-import type { DateInput, ISOString, ShiftWindow, TimeString } from './types'
+import type { DateInput, ISOString, ShiftWindow, TimeString } from './types.ts'
 
 // ── Core constructors ────────────────────────────────────────────────────────
 

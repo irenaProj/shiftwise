@@ -5,7 +5,7 @@ export type {
   TimeString,
   Timezone,
   ShiftWindow,
-} from './types'
+} from "./types.ts";
 
 // ── UTC operations ───────────────────────────────────────────────────────────
 // Safe to import on both backend and frontend
@@ -24,7 +24,7 @@ export {
   buildShiftWindow,
   doShiftsOverlap,
   hasMinRest,
-} from './utc'
+} from "./utc.ts";
 
 // ── Display operations ───────────────────────────────────────────────────────
 // ⚠️  Import only in frontend presentational components — never on the backend
@@ -37,4 +37,4 @@ export {
   formatMonthYear,
   formatTZAbbr,
   localTimeToUTC,
-} from './display'
+} from "./display.ts";
