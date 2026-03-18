@@ -176,8 +176,8 @@ npm run db:seed       # creates demo workspace + users
 Seed creates:
 
 - Workspace: **Demo Cafe**
-- Manager: `manager@demo.com` / `password123`
-- Employees: `alice@demo.com`, `bob@demo.com`, `carol@demo.com` / `password123`
+- Manager: `will.power@demo.com` / `password123`
+- Employees: `lou.poles@demo.com`, `fran.tastic@demo.com`, `zack.lee@demo.com` / `password123`
 
 ### 4. Run the app
 
@@ -349,30 +349,3 @@ shiftwise/
 - [ ] Milestone 7–8 — Calendar UI with drag-and-drop
 - [ ] Milestone 9 — Real-time updates (Socket.io)
 - [ ] Milestone 10 — Shift swap requests
-
----
-
-## Interview talking points
-
-**Database design:** The `memberships` table with a composite unique key on
-`(userId, workspaceId)` enables multi-tenant workspaces without duplicating
-user records. A user can belong to multiple workspaces with different roles.
-
-**Auth:** Refresh tokens are stored as httpOnly cookies (XSS-proof) with
-rotation on each use. Access tokens are short-lived (15min) and never
-persisted. A failed refresh redirects to login cleanly.
-
-**Type safety end-to-end:** Prisma generates TypeScript types from the schema,
-Zod validates all inputs, and the frontend uses the same shape via inferred
-types. A schema change propagates through the whole stack at compile time.
-
-**Date handling:** All dates are stored and exchanged as UTC ISO strings. The
-`@shiftwise/dates` package wraps `date-fns` v4 behind an Adapter + Facade
-pattern — `UTCDate` is used for all calculations to prevent local timezone
-bleed, and the `{ in: tz() }` option in `format` handles localisation at the
-display layer only. Swapping the underlying library requires changing one file.
-
-**Monorepo:** npm workspaces links `backend`, `frontend`, and `packages/dates`
-together with a single `npm install` at the root. The shared dates package has
-no build step — both consumers point directly at the TypeScript source, so
-changes hot-reload instantly in both `tsx watch` and Vite.

@@ -120,7 +120,7 @@ export function LoginPage() {
               Demo credentials
             </p>
             <p className="text-xs text-slate-600 font-mono">
-              manager@demo.com / password123
+              will.power@demo.com / password123
             </p>
           </div>
         </div>

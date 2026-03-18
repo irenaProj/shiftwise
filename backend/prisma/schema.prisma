@@ -15,6 +15,7 @@ model User {
   email        String      @unique
   passwordHash String      @map("password_hash")
   name         String
+  timezone     String      @default("UTC")
   createdAt    DateTime    @default(now()) @map("created_at")
   updatedAt    DateTime    @updatedAt @map("updated_at")
 
@@ -27,6 +28,7 @@ model User {
 model Workspace {
   id        String   @id @default(cuid())
   name      String
+  timezone  String   @default("UTC")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
