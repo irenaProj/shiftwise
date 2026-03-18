@@ -71,6 +71,7 @@ Seed creates:
 - Manager: `manager@demo.com` / `password123`
 - Employees: `alice@demo.com`, `bob@demo.com`, `carol@demo.com` / `password123`
 
+
 ### 4. Run the app
 
 ```bash
@@ -113,24 +114,36 @@ npm run dev
 2. Connection string → copy it
 3. Keep this for Step 2
 
-### Step 2 — Backend (Railway)
+## Backend Deployment (Render)
 
-1. Go to [railway.app](https://railway.app) → New project → Deploy from GitHub repo
-2. Select the `backend` folder as the root (or use a separate repo)
-3. Add environment variables in Railway dashboard:
-   ```
-   DATABASE_URL=<your Supabase URI>
-   JWT_ACCESS_SECRET=<random 64-char hex>
-   JWT_REFRESH_SECRET=<different random 64-char hex>
-   FRONTEND_URL=https://your-app.vercel.app
-   NODE_ENV=production
-   ```
-4. In Railway, add a **Start Command** override: `npm run start`
-5. Deploy — Railway runs `npm install && npm run db:generate && npm run build` automatically via `railway.toml`
-6. After first deploy, run migrations:
-   - Railway dashboard → your service → **Shell** tab
-   - Run: `npx prisma migrate deploy && npm run db:seed`
-7. Copy your Railway public URL: `https://shiftwise-api.up.railway.app`
+1. Go to [render.com](https://render.com) and sign up
+2. Click **New → Web Service**
+3. Connect your GitHub repo and select it
+4. Set these options:
+   - **Root directory:** `backend`
+   - **Build command:** `npm install && npx prisma generate && npm run build`
+   - **Start command:** `node dist/index.js`
+5. Add environment variables:
+
+   | Variable | Value |
+   |----------|-------|
+   | `DATABASE_URL` | Your Neon connection string |
+   | `JWT_ACCESS_SECRET` | Random 64-char hex string |
+   | `JWT_REFRESH_SECRET` | Different random 64-char hex string |
+   | `FRONTEND_URL` | `https://your-app.vercel.app` |
+   | `NODE_ENV` | `production` |
+   | `PORT` | `3001` |
+
+   Generate JWT secrets with:
+```bash
+   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+6. Click **Deploy**
+7. Copy your Render URL (e.g. `https://shiftwise-api.onrender.com`) — you'll need it for the frontend
+
+> **Note:** The free tier spins down after 15 minutes of inactivity and takes ~30 seconds to wake up on the next request. This is fine for a portfolio project.
+
 
 ### Step 3 — Frontend (Vercel)
 
@@ -138,7 +151,7 @@ npm run dev
 2. Set **Root Directory** to `frontend`
 3. Add environment variable:
    ```
-   VITE_API_URL=https://shiftwise-api.up.railway.app
+   VITE_API_URL=https://shiftwise-api.up.render.app
    ```
 4. Deploy
 
