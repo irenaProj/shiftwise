@@ -20,10 +20,10 @@ async function main() {
   // Create manager
   const managerHash = await bcrypt.hash("password123", 12);
   const manager = await prisma.user.upsert({
-    where: { email: "power@demo.com" },
+    where: { email: "will.power@demo.com" },
     update: {},
     create: {
-      email: "power@demo.com",
+      email: "will.power@demo.com",
       passwordHash: managerHash,
       name: "Will Power",
       timezone: "Australia/Sydney",
