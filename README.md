@@ -3,7 +3,7 @@
 > AI-powered shift scheduler — full-stack portfolio project
 
 **Live demo:** https://shiftwise.vercel.app  
-**API:** https://shiftwise-api.railway.app/api/health
+**API:** https://shiftwise-api.Render.app/api/health
 
 ---
 
@@ -24,7 +24,7 @@ A workforce management app where managers can schedule employees, handle shift s
 | Backend    | Node.js, Express, TypeScript                    |
 | Database   | PostgreSQL via Prisma ORM                       |
 | Auth       | JWT (access) + httpOnly cookie (refresh)        |
-| Deployment | Vercel (FE) + Railway (BE) + Supabase (DB)      |
+| Deployment | Vercel (FE) + Render (BE) + Supabase (DB)      |
 
 ---
 
@@ -160,7 +160,7 @@ npm run dev
 // Development (uses Vite proxy):
 baseURL: '/api'
 
-// Production (direct to Railway):
+// Production (direct to Render):
 baseURL: import.meta.env.VITE_API_URL + '/api'
 ```
 
@@ -171,7 +171,7 @@ baseURL: import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL + '/api' : 
 
 ### Step 4 — Update CORS
 
-Once you have your Vercel URL, update `FRONTEND_URL` in Railway to match exactly:
+Once you have your Vercel URL, update `FRONTEND_URL` in Render to match exactly:
 ```
 FRONTEND_URL=https://shiftwise.vercel.app
 ```
@@ -196,8 +196,7 @@ shiftwise/
 │   │   │   ├── auth.ts        # Register, login, refresh, logout
 │   │   │   └── workspaces.ts  # Employee CRUD
 │   │   └── index.ts           # Express app
-│   ├── .env.example
-│   └── railway.toml
+│   └── .env.example
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
