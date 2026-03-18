@@ -2,8 +2,8 @@
 
 > AI-powered shift scheduler — full-stack portfolio project
 
-**Live demo:** https://shiftwise.vercel.app  
-**API:** https://shiftwise-api.Render.app/api/health
+**Live demo:** https://shiftwise-app.vercel.app  
+**API:** https://shiftwise-0sin.onrender.com/api/health
 
 ---
 
@@ -184,7 +184,7 @@ baseURL: import.meta.env.VITE_API_URL
 Once you have your Vercel URL, update `FRONTEND_URL` in Render to match exactly:
 
 ```
-FRONTEND_URL=https://shiftwise.vercel.app
+FRONTEND_URL=https://shiftwise-app.vercel.app
 ```
 
 ---
