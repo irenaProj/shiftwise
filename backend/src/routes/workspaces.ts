@@ -38,7 +38,7 @@ router.get(
         },
         orderBy: { createdAt: "asc" },
       });
-      throw new Error("just for fun");
+
       Ok(
         res,
         members.map((m) => ({
