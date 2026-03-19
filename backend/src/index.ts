@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth";
 import workspaceRoutes from "./routes/workspaces";
 import { requestLogger } from "./middleware/logger";
+import { AppError } from "./lib/errors";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -36,8 +37,22 @@ app.use(
     res: express.Response,
     _next: express.NextFunction,
   ) => {
+    if (err instanceof AppError) {
+      res.status(err.statusCode).json({
+        error: err.message,
+        code: err.code,
+      });
+      return;
+    }
+
     console.error(err.stack);
-    res.status(500).json({ error: "Internal server error" });
+
+    const isDev = process.env.NODE_ENV !== "production";
+    res.status(500).json({
+      error: err.message,
+      code: "INTERNAL_ERROR",
+      ...(isDev && { stack: err.stack }),
+    });
   },
 );
 
