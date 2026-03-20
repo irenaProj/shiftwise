@@ -56,14 +56,16 @@ cd .. && npm run dev
 
 ## Documentation
 
-| Doc | Description |
-| --- | ----------- |
-| [Architecture](docs/architecture.md) | System design, data model, monorepo structure |
-| [API Reference](docs/api.md) | Endpoints, auth, error codes |
-| [Testing](docs/testing.md) | Test strategy, running tests, CI |
-| [Deployment](docs/deployment.md) | Render, Vercel, Neon, GitHub Actions |
-| [Docker](docs/docker.md) | Local Docker setup, Codespaces notes |
-| [Dates Package](docs/dates-package.md) | @shiftwise/dates design and usage |
+| Doc                                                          | Description                                   |
+| ------------------------------------------------------------ | --------------------------------------------- |
+| [Architecture](docs/architecture.md)                         | System design, data model, monorepo structure |
+| [API Reference](docs/api.md)                                 | Endpoints, auth, error codes                  |
+| [Testing](docs/testing.md)                                   | Test strategy, running tests, CI              |
+| [Deployment](docs/deployment.md)                             | Render, Vercel, Neon, GitHub Actions          |
+| [Docker](docs/docker.md)                                     | Local Docker setup, Codespaces notes          |
+| [Dates Package](docs/dates-package.md)                       | @shiftwise/dates design and usage             |
+| [GitHub Setup](docs/github-setup.md)                         | Secrets, Pages, branch protection, Codespaces |
+| [API Docs (TypeDoc)](https://irenaProj.github.io/shiftwise/) | Generated docs from JSDoc comments            |
 
 ---
 
