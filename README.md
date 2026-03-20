@@ -3,7 +3,8 @@
 > AI-powered shift scheduler — full-stack portfolio project
 
 **Live demo:** https://shiftwise-app.vercel.app  
-**API:** https://shiftwise-0sin.onrender.com/api/health
+**API:** https://shiftwise-0sin.onrender.com/api/health  
+**Docs:** https://irenaproj.github.io/shiftwise/
 
 ---
 
