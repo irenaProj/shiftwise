@@ -205,7 +205,7 @@ shiftwise/
 
 ---
 
-## Interview talking points
+## Highlights
 
 **Database design:** The memberships composite unique key enables multi-tenancy
 without duplicating user records. Foreign key cascades ensure referential

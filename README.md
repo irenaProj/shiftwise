@@ -41,7 +41,7 @@ end-to-end with auth, RBAC, error handling, and a test suite.
 ## Quick start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/shiftwise.git
+git clone https://github.com/irenaProj/shiftwise.git
 cd shiftwise
 npm install
 cd backend && cp .env.example .env  # fill in DATABASE_URL + JWT secrets

@@ -153,7 +153,6 @@ no build tools — just what's needed to run.
 - **Consistency** — identical environment locally, in CI, and in production
 - **Onboarding** — one command gets a new developer the full stack
 - **Production parity** — test against the same nginx + node/alpine used in production
-- **Interview talking point** — multi-stage builds, layer caching, health checks, volume management
 
 > **Tip:** Use `npm run dev` for active development — it's faster and
 > breakpoints work out of the box. Use Docker to verify production builds

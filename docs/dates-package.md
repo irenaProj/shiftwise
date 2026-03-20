@@ -154,9 +154,9 @@ changes are picked up automatically:
 
 ---
 
-## Interview talking point
+## Highlights
 
-This is a textbook application of two patterns working together — the
+This is an application of two patterns working together — the
 **Adapter** hides the third-party library, and the **Facade** exposes a
 domain-specific API tailored to shift scheduling. If `date-fns` ships a
 breaking change or we need timezone-aware dates via Luxon, we swap one file
