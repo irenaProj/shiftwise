@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Docker",
+      "port": 9229,
+      "restart": true,
+      "remoteRoot": "/app/backend/src",
+      "localRoot": "${workspaceFolder}/backend/src"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug backend (no Docker)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "watch", "src/index.ts"],
+      "cwd": "${workspaceFolder}/backend",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}

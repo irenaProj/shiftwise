@@ -9,9 +9,14 @@
 
 ## What this is
 
-A workforce management app where managers can schedule employees, handle shift swaps, and use AI to resolve scheduling conflicts. Built to demonstrate full-stack engineering across database design, REST API, auth, and a polished React UI.
+A workforce management app where managers can schedule employees, handle shift
+swaps, and use AI to resolve scheduling conflicts. Built to demonstrate
+full-stack engineering across database design, REST API, auth, and a polished
+React UI.
 
-**Hello World milestone (this branch):** A manager can register, create a workspace, add team members, and see them listed on a dashboard. Full stack wired end-to-end.
+**Hello World milestone (this branch):** A manager can register, create a
+workspace, add team members, and see them listed on a dashboard. Full stack
+wired end-to-end.
 
 ---
 
@@ -25,7 +30,9 @@ A workforce management app where managers can schedule employees, handle shift s
 | Database   | PostgreSQL via Prisma ORM                       |
 | Auth       | JWT (access) + httpOnly cookie (refresh)        |
 | Dates      | date-fns v4, @date-fns/utc, @date-fns/tz        |
+| Container  | Docker + nginx                                  |
 | Deployment | Vercel (FE) + Render (BE) + Neon (DB)           |
+| CI/CD      | GitHub Actions                                  |
 
 ---
 
@@ -175,7 +182,7 @@ npm run db:seed       # creates demo workspace + users
 
 Seed creates:
 
-- Workspace: **Demo Cafe**
+- Workspace: **Demo Cafe** (timezone: Australia/Sydney)
 - Manager: `will.power@demo.com` / `password123`
 - Employees: `lou.poles@demo.com`, `fran.tastic@demo.com`, `zack.lee@demo.com` / `password123`
 
@@ -195,6 +202,175 @@ and click the 🌐 globe icon to open it in the browser.
 
 ---
 
+## Docker
+
+The project includes a full Docker setup for running the complete stack locally
+in containers, and for producing production-ready images.
+
+### Prerequisites
+
+- Docker Desktop installed and running
+
+### Files
+
+```
+shiftwise/
+├── docker-compose.yml          # Full stack: postgres + backend + frontend
+├── docker-compose.dev.yml      # Dev overrides with hot reload
+├── .env.example                # Environment variable template for Docker
+├── backend/
+│   ├── Dockerfile              # Multi-stage: builder + production (node/alpine)
+│   └── .dockerignore
+└── frontend/
+    ├── Dockerfile              # Multi-stage: builder + production (nginx/alpine)
+    ├── nginx.conf              # React Router support + asset caching
+    └── .dockerignore
+```
+
+### Running with Docker
+
+**Step 1 — Create your `.env` file**
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your values:
+
+```
+JWT_ACCESS_SECRET=your-64-char-hex-string
+JWT_REFRESH_SECRET=your-different-64-char-hex-string
+FRONTEND_URL=http://localhost:80
+VITE_API_URL=http://localhost:3001
+```
+
+Generate JWT secrets with:
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
+
+**Step 2 — Build and start**
+
+```bash
+docker compose up --build
+```
+
+This starts three containers:
+- `shiftwise_db` — PostgreSQL 16 on port 5432
+- `shiftwise_api` — Express API on port 3001
+- `shiftwise_fe` — nginx serving React on port 80
+
+**Step 3 — Run migrations and seed (first time only)**
+
+In a second terminal:
+
+```bash
+docker compose exec backend sh -c "cd backend && npx prisma migrate deploy"
+docker compose exec backend sh -c "cd backend && npx tsx prisma/seed.ts"
+```
+
+**Step 4 — Open the app**
+
+Go to http://localhost:80 and log in with `will.power@demo.com` / `password123`.
+
+### Tear down and reset
+
+```bash
+# Stop containers and wipe the database volume
+docker compose down -v
+
+# Rebuild and start fresh
+docker compose up --build -d
+sleep 10
+docker compose exec backend sh -c "cd backend && npx prisma migrate deploy"
+docker compose exec backend sh -c "cd backend && npx tsx prisma/seed.ts"
+```
+
+### Running in Codespaces with Docker
+
+Codespaces uses forwarded URLs instead of `localhost`. You need to set the
+actual Codespaces URLs in your `.env` before building:
+
+```bash
+# Get your URLs
+echo "Frontend: https://${CODESPACE_NAME}-80.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+echo "Backend:  https://${CODESPACE_NAME}-3001.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
+```
+
+Update `.env` with these URLs (no quotes, no variable expansion):
+
+```
+FRONTEND_URL=https://your-codespace-name-80.app.github.dev
+VITE_API_URL=https://your-codespace-name-3001.app.github.dev
+```
+
+> **Important:** After building, go to the **Ports** tab in VS Code and set
+> ports `80` and `3001` to **Public** visibility — otherwise the browser
+> can't reach the containers.
+
+> **Note:** Codespaces URLs change when you create a new Codespace. Update
+> `.env` and rebuild when this happens.
+
+### Hot reload in development
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+This mounts source files as volumes so changes hot-reload without rebuilding
+the image.
+
+### Why Docker?
+
+- **Consistency** — identical environment in Codespaces, locally, and in CI
+- **Onboarding** — new developers run one command to get the full stack running
+- **Production parity** — test against the same nginx + node/alpine setup used in production
+- **Interview talking point** — multi-stage builds, layer caching, health checks
+
+> **Tip:** For active day-to-day development, `npm run dev` is faster and
+> supports breakpoints out of the box. Use Docker to test production builds
+> before deploying.
+
+---
+
+## CI/CD
+
+### GitHub Actions workflows
+
+```
+.github/workflows/
+├── ci.yml        # Runs on every push and PR — type checks backend and frontend
+└── deploy.yml    # Runs on push to main — triggers Render backend redeploy
+```
+
+### CI workflow (`ci.yml`)
+
+Runs on every push and pull request:
+- Type checks the backend (`tsc --noEmit`)
+- Type checks the frontend (`tsc && vite build`)
+- Both must pass before merging
+
+### Deploy workflow (`deploy.yml`)
+
+Runs automatically on every push to `main`:
+- Triggers a Render deploy hook for the backend
+- Vercel redeploys the frontend automatically via its own GitHub integration
+
+### Required GitHub repository secrets
+
+| Secret | Description |
+|--------|-------------|
+| `RENDER_DEPLOY_HOOK_BACKEND` | Render deploy hook URL for the backend service |
+
+Get the Render deploy hook from: **Render dashboard → your service → Settings → Deploy Hook**
+
+### Debugging
+
+Vercel builds and Render deploys are both visible in their respective dashboards.
+GitHub Actions logs are in your repo under **Actions** tab.
+
+---
+
 ## API reference
 
 ### Auth
@@ -208,11 +384,33 @@ and click the 🌐 globe icon to open it in the browser.
 
 ### Workspaces / Employees
 
-| Method | Endpoint                                | Auth | Description       |
-| ------ | --------------------------------------- | ---- | ----------------- |
-| GET    | `/api/workspaces/:id/employees`         | ✅   | List all members  |
-| POST   | `/api/workspaces/:id/employees`         | ✅   | Add a team member |
-| DELETE | `/api/workspaces/:id/employees/:userId` | ✅   | Remove a member   |
+| Method | Endpoint                                | Auth | Role          | Description       |
+| ------ | --------------------------------------- | ---- | ------------- | ----------------- |
+| GET    | `/api/workspaces/:id/employees`         | ✅   | Any member    | List all members  |
+| POST   | `/api/workspaces/:id/employees`         | ✅   | Owner/Manager | Add a team member |
+| DELETE | `/api/workspaces/:id/employees/:userId` | ✅   | Owner/Manager | Remove a member   |
+
+### Error responses
+
+All errors follow a consistent format:
+
+```json
+{
+  "error": "Human readable message",
+  "code": "MACHINE_READABLE_CODE"
+}
+```
+
+| Code | Status | Description |
+|------|--------|-------------|
+| `BAD_REQUEST` | 400 | Invalid input or validation failure |
+| `UNAUTHORIZED` | 401 | Missing, invalid, or expired token |
+| `FORBIDDEN` | 403 | Authenticated but insufficient role |
+| `NOT_FOUND` | 404 | Resource does not exist |
+| `CONFLICT` | 409 | Resource already exists |
+| `INTERNAL_ERROR` | 500 | Unexpected server error |
+
+In development, `500` errors also include a `stack` field for debugging.
 
 ---
 
@@ -257,7 +455,8 @@ and click the 🌐 globe icon to open it in the browser.
    ```bash
    npx prisma migrate deploy && npx tsx prisma/seed.ts
    ```
-7. Copy your Render URL — you'll need it for the frontend
+7. Go to **Settings → Deploy Hook** → copy the URL
+8. Add it as `RENDER_DEPLOY_HOOK_BACKEND` in GitHub repository secrets
 
 > **Note:** The free tier spins down after 15 minutes of inactivity and takes
 > ~30 seconds to wake up. This is fine for a portfolio project.
@@ -272,7 +471,7 @@ and click the 🌐 globe icon to open it in the browser.
    | -------------- | --------------------------------------------------------- |
    | `VITE_API_URL` | Your Render URL e.g. `https://shiftwise-api.onrender.com` |
 
-4. Click **Deploy**
+4. Click **Deploy** — Vercel will redeploy automatically on every push to `main`
 
 ### Step 4 — Update CORS
 
@@ -304,14 +503,18 @@ shiftwise/
 │   ├── src/
 │   │   ├── lib/
 │   │   │   ├── prisma.ts      # Prisma singleton
-│   │   │   └── jwt.ts         # Token signing/verification
+│   │   │   ├── jwt.ts         # Token signing/verification
+│   │   │   ├── errors.ts      # AppError class + convenience factories
+│   │   │   └── responses.ts   # Ok, Created, NoContent helpers
 │   │   ├── middleware/
-│   │   │   ├── auth.ts        # requireAuth middleware
-│   │   │   └── logger.ts      # Request logger with duration
+│   │   │   ├── auth.ts        # requireAuth + requireRole middleware
+│   │   │   └── logger.ts      # Request logger with method, status, duration
 │   │   ├── routes/
 │   │   │   ├── auth.ts        # Register, login, refresh, logout
 │   │   │   └── workspaces.ts  # Employee CRUD
-│   │   └── index.ts           # Express app
+│   │   └── index.ts           # Express app + global error handler
+│   ├── Dockerfile
+│   ├── .dockerignore
 │   └── .env.example
 ├── frontend/
 │   ├── src/
@@ -327,8 +530,17 @@ shiftwise/
 │   │   │   └── DashboardPage.tsx
 │   │   ├── App.tsx
 │   │   └── main.tsx
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── .dockerignore
 │   └── vercel.json
-├── .github/workflows/ci.yml
+├── docker-compose.yml
+├── docker-compose.dev.yml
+├── .env.example               # Docker environment template
+├── .github/
+│   └── workflows/
+│       ├── ci.yml             # Type check on push + PR
+│       └── deploy.yml         # Deploy to Render on push to main
 ├── .devcontainer/
 │   ├── devcontainer.json      # Codespaces config
 │   └── setup.sh               # Auto-setup script
@@ -343,9 +555,54 @@ shiftwise/
 - [x] Milestone 2 — Auth: register, login, JWT, refresh token rotation
 - [x] Milestone 3 — Employee management CRUD
 - [x] Shared dates package — UTC adapter + display facade
+- [x] Docker — multi-stage builds, docker-compose, nginx
+- [x] CI/CD — GitHub Actions, Render deploy hooks, Vercel auto-deploy
 - [ ] Milestone 4 — Shift templates & availability
 - [ ] Milestone 5 — Constraint-based schedule generator
 - [ ] Milestone 6 — AI integration (Claude API)
 - [ ] Milestone 7–8 — Calendar UI with drag-and-drop
 - [ ] Milestone 9 — Real-time updates (Socket.io)
 - [ ] Milestone 10 — Shift swap requests
+
+---
+
+## Interview talking points
+
+**Database design:** The `memberships` table with a composite unique key on
+`(userId, workspaceId)` enables multi-tenant workspaces without duplicating
+user records. A user can belong to multiple workspaces with different roles.
+
+**Auth:** Refresh tokens are stored as httpOnly cookies (XSS-proof) with
+rotation on each use. Access tokens are short-lived (15min) and never
+persisted. A failed refresh redirects to login cleanly.
+
+**Type safety end-to-end:** Prisma generates TypeScript types from the schema,
+Zod validates all inputs, and the frontend uses the same shape via inferred
+types. A schema change propagates through the whole stack at compile time.
+
+**Date handling:** All dates are stored and exchanged as UTC ISO strings. The
+`@shiftwise/dates` package wraps `date-fns` v4 behind an Adapter + Facade
+pattern — `UTCDate` is used for all calculations to prevent local timezone
+bleed, and the `{ in: tz() }` option in `format` handles localisation at the
+display layer only. Swapping the underlying library requires changing one file.
+
+**Monorepo:** npm workspaces links `backend`, `frontend`, and `packages/dates`
+together with a single `npm install` at the root. The shared dates package has
+no build step — both consumers point directly at the TypeScript source, so
+changes hot-reload instantly in both `tsx watch` and Vite.
+
+**Error handling:** A custom `AppError` class with convenience factories
+(`Forbidden`, `Unauthorized`, `Conflict` etc.) replaces scattered
+`res.status().json()` calls. A global error handler catches everything —
+known errors return structured `{ error, code }` JSON, unknown errors
+propagate the message in development and hide internals in production.
+
+**Docker:** Multi-stage builds produce lean production images — the builder
+stage compiles TypeScript and the production stage copies only the compiled
+output, keeping the image small. The frontend uses nginx with a custom config
+to handle React Router and cache static assets.
+
+**CI/CD:** GitHub Actions runs type checks on every push and PR. On merge to
+`main`, a deploy hook triggers Render to redeploy the backend, while Vercel
+deploys the frontend automatically via its GitHub integration. No manual
+deploys needed.

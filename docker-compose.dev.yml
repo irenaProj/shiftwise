@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: builder
+    command: sh -c "cd backend && npx tsx watch --inspect=0.0.0.0:9229 src/index.ts"
+    ports:
+      - '9229:9229'  # debugger port
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./backend/prisma:/app/backend/prisma
+    environment:
+      NODE_ENV: development
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: builder
+    command: sh -c "cd frontend && npx vite --host"
+    volumes:
+      - ./frontend/src:/app/frontend/src
+    ports:
+      - '5173:5173'
