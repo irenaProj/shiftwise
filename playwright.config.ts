@@ -23,10 +23,9 @@ export default defineConfig({
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
 
-  // Reset and seed the test database before all tests
   globalSetup: './e2e/global-setup.ts',
 
-  // Start dev server automatically when running locally
+  // Only auto-start dev server when running locally (not in CI)
   ...(!isCI && {
     webServer: {
       command: 'npm run dev',
