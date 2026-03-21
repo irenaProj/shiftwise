@@ -295,6 +295,28 @@ When a test fails in CI, these are uploaded as the `playwright-report` artifact
 - **Video** — full test run recording
 - **Trace** — step-by-step log, view with `npx playwright show-trace trace.zip`
 
+### Coverage reports
+
+Coverage is uploaded to Codecov after every CI run by both the backend and
+frontend test jobs. View the full report at:
+
+https://codecov.io/gh/irenaProj/shiftwise
+
+The README badge reflects the combined coverage across both packages. Codecov
+also shows a breakdown by `backend` and `frontend` flags separately.
+
+To run coverage locally:
+```bash
+# Backend
+cd backend && npm run test:coverage
+
+# Frontend
+cd frontend && npm run test:coverage
+```
+
+HTML reports are written to `backend/coverage/` and `frontend/coverage/`
+respectively — open `index.html` in a browser to browse line-by-line coverage.
+
 ---
 
 ## Adding new tests
