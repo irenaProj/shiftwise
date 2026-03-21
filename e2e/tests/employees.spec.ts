@@ -21,11 +21,9 @@ test.describe('Employee Management', () => {
   })
 
   test('manager can add a new employee', async ({ authenticatedPage: page }) => {
-    const uniqueName = `Test User ${Date.now()}`
-    const uniqueEmail = `test.${Date.now()}@demo.com`
-
-    // Count rows before adding
-    const rowsBefore = await page.getByRole('table').locator('tbody tr').count()
+    const timestamp = Date.now()
+    const uniqueName = `Test User ${timestamp}`
+    const uniqueEmail = `test.${timestamp}@demo.com`
 
     await page.getByRole('button', { name: /add member/i }).click()
     await page.getByPlaceholder('Alex Johnson').fill(uniqueName)
@@ -35,8 +33,8 @@ test.describe('Employee Management', () => {
     // Modal closes
     await expect(page.getByText('Add team member')).not.toBeVisible()
 
-    // Table has one more row than before
-    await expect(page.getByRole('table').locator('tbody tr')).toHaveCount(rowsBefore + 1)
+    // The specific email we just added appears in the table
+    await expect(page.getByRole('table').getByText(uniqueEmail)).toBeVisible()
   })
 
   test('shows conflict error for duplicate email', async ({ authenticatedPage: page }) => {
