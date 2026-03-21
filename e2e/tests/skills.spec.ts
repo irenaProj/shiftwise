@@ -7,8 +7,9 @@ test.describe("Skills", () => {
   });
 
   test("shows workspace skills", async ({ authenticatedPage: page }) => {
-    await expect(page.getByText("Barista")).toBeVisible();
-    await expect(page.getByText("Cashier")).toBeVisible();
+    const wsCard = page.locator("h2", { hasText: "Workspace skills" }).locator("..");
+    await expect(wsCard.getByText("Barista")).toBeVisible();
+    await expect(wsCard.getByText("Cashier")).toBeVisible();
   });
 
   test("shows add skill form for managers", async ({
@@ -20,18 +21,20 @@ test.describe("Skills", () => {
   });
 
   test("manager can add a new skill", async ({ authenticatedPage: page }) => {
+    const wsCard = page.locator("h2", { hasText: "Workspace skills" }).locator("..");
     await page.getByPlaceholder("New skill name").fill("Kitchen Hand");
     await page.getByRole("button", { name: /^add$/i }).click();
     await expect(page.getByPlaceholder("New skill name")).toHaveValue("");
-    await expect(page.getByText("Kitchen Hand")).toBeVisible();
+    await expect(wsCard.getByText("Kitchen Hand")).toBeVisible();
   });
 
   test("manager can delete a skill", async ({ authenticatedPage: page }) => {
     page.on("dialog", (d) => d.accept());
-    await expect(page.getByText("Cashier")).toBeVisible();
+    const wsCard = page.locator("h2", { hasText: "Workspace skills" }).locator("..");
+    await expect(wsCard.getByText("Cashier")).toBeVisible();
     // Click the × on the Cashier chip
-    await page.getByText("Cashier").locator("..").getByRole("button").click();
-    await expect(page.getByText("Cashier")).not.toBeVisible();
+    await page.getByTitle("Remove Cashier").click();
+    await expect(wsCard.getByText("Cashier")).not.toBeVisible();
   });
 
   test("shows employee skill assignment section", async ({

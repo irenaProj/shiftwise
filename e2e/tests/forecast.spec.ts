@@ -9,14 +9,14 @@ test.describe("Forecast", () => {
   test("shows forecast grid with seeded slots", async ({
     authenticatedPage: page,
   }) => {
-    await expect(page.getByText("09:00")).toBeVisible();
-    await expect(page.getByText("12:00")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "09:00" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "12:00" })).toBeVisible();
   });
 
   test("shows required count badges", async ({ authenticatedPage: page }) => {
-    // Slot with required=3 at 09:00 Mon
-    await expect(page.getByText("3")).toBeVisible();
-    await expect(page.getByText("2")).toBeVisible();
+    // Slot with required=3 at 09:00 Mon — scope to table to avoid matching the legend
+    await expect(page.locator("table").getByText("3")).toBeVisible();
+    await expect(page.locator("table").getByText("2")).toBeVisible();
   });
 
   test("shows Set demand form for managers", async ({
@@ -37,18 +37,18 @@ test.describe("Forecast", () => {
     await page.getByRole("button", { name: /save slot/i }).click();
 
     // New time row appears in the grid
-    await expect(page.getByText("10:00")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "10:00" })).toBeVisible();
   });
 
   test("manager can delete a forecast slot", async ({
     authenticatedPage: page,
   }) => {
     page.on("dialog", (d) => d.accept());
-    await expect(page.getByText("09:00")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "09:00" })).toBeVisible();
     // Click × on the badge in the 09:00 row
     await page.getByTitle("Remove slot").first().click();
     // The 09:00 row disappears since only one slot remains
-    await expect(page.getByText("09:00")).not.toBeVisible();
+    await expect(page.getByRole("cell", { name: "09:00" })).not.toBeVisible();
   });
 
   test("shows colour legend", async ({ authenticatedPage: page }) => {

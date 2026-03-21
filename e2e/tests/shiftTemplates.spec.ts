@@ -49,7 +49,7 @@ test.describe("Shift Templates", () => {
     // Click the delete button next to Afternoon
     await page
       .getByText("Afternoon")
-      .locator("../..")
+      .locator("../../..")
       .getByTitle("Delete template")
       .click();
     await expect(page.getByText("Afternoon")).not.toBeVisible();

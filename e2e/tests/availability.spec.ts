@@ -22,7 +22,7 @@ test.describe("Availability", () => {
       .getByRole("combobox", { name: /employee/i })
       .selectOption({ label: "Lou Poles" });
     await expect(page.getByText("07:00 – 15:00")).toBeVisible();
-    await expect(page.getByText("Mon")).toBeVisible();
+    await expect(page.getByText("Mon", { exact: true })).toBeVisible();
   });
 
   test("shows add availability form for managers", async ({
