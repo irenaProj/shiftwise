@@ -1,9 +1,5 @@
-// This is the "Hello World" schema — just enough to prove the stack works.
-// More tables (shifts, schedules, availability) will be added in later milestones.
-
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -11,61 +7,128 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Auth & workspace ──────────────────────────────────────
+
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String      @map("password_hash")
-  name         String
-  timezone     String      @default("UTC")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
-
-  memberships  Membership[]
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  name          String
+  timezone      String         @default("UTC")
+  memberships   Membership[]
   refreshTokens RefreshToken[]
-
-  @@map("users")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
-  name      String
-  timezone  String   @default("UTC")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  memberships Membership[]
-
-  @@map("workspaces")
+  id             String          @id @default(cuid())
+  name           String
+  timezone       String          @default("UTC")
+  memberships    Membership[]
+  skills         Skill[]
+  shiftTemplates ShiftTemplate[]
+  forecastSlots  ForecastSlot[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 }
 
 model Membership {
-  id          String    @id @default(cuid())
-  userId      String    @map("user_id")
-  workspaceId String    @map("workspace_id")
-  role        Role      @default(EMPLOYEE)
-  createdAt   DateTime  @default(now()) @map("created_at")
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id             String            @id @default(cuid())
+  userId         String
+  workspaceId    String
+  role           Role              @default(EMPLOYEE)
+  user           User              @relation(fields: [userId], references: [id])
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id])
+  skills         MembershipSkill[]
+  availabilities Availability[]
+  createdAt      DateTime          @default(now())
 
   @@unique([userId, workspaceId])
-  @@map("memberships")
 }
 
 model RefreshToken {
   id        String   @id @default(cuid())
   token     String   @unique
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("refresh_tokens")
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 enum Role {
   OWNER
   MANAGER
   EMPLOYEE
+}
+
+// ─── Milestone 4: Skills ───────────────────────────────────
+// Skills live on employees only. Templates are skill-agnostic.
+// Phase 1: single "all-rounder" approach; per-skill forecasting later.
+
+model Skill {
+  id          String            @id @default(cuid())
+  name        String
+  workspaceId String
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  employees   MembershipSkill[]
+  createdAt   DateTime          @default(now())
+
+  @@unique([name, workspaceId])
+}
+
+model MembershipSkill {
+  id           String     @id @default(cuid())
+  membershipId String
+  skillId      String
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  skill        Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([membershipId, skillId])
+}
+
+// ─── Milestone 4: Shift templates ──────────────────────────
+// Pure time frames — no skill linkage. Just "Morning: 06:00–14:00".
+
+model ShiftTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  startTime   String   // HH:mm format, e.g. "06:00"
+  endTime     String   // HH:mm format, e.g. "14:00"
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── Milestone 4: Forecast ─────────────────────────────────
+// Demand layer: how many employees are needed per 30-min slot.
+// "Scheduled" count is computed at query time from actual assignments.
+
+model ForecastSlot {
+  id          String    @id @default(cuid())
+  workspaceId String
+  dayOfWeek   Int       // 0 = Sunday, 1 = Monday … 6 = Saturday
+  time        String    // HH:mm — start of the 30-min window, e.g. "09:00" means 09:00–09:30
+  required    Int       @default(1) // number of employees needed in this slot
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([workspaceId, dayOfWeek, time])
+}
+
+// ─── Milestone 4: Availability ─────────────────────────────
+
+model Availability {
+  id           String     @id @default(cuid())
+  membershipId String
+  dayOfWeek    Int        // 0 = Sunday, 1 = Monday … 6 = Saturday
+  startTime    String     // HH:mm
+  endTime      String     // HH:mm
+  membership   Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([membershipId, dayOfWeek, startTime])
 }
