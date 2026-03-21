@@ -3,6 +3,10 @@ name: Docs
 on:
   push:
     branches: [main]
+    paths:
+      - 'packages/dates/src/**'
+      - 'backend/src/lib/**'
+      - 'backend/src/middleware/**'
   workflow_dispatch:
 
 permissions:
