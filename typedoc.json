@@ -7,21 +7,15 @@
     "backend/src/middleware/auth.ts",
     "backend/src/middleware/logger.ts"
   ],
-  "out": "docs-generated",
+  "out": "docs/api",
   "name": "ShiftWise API Docs",
-  "readme": "README.md",
+  "readme": "none",
   "navigationLinks": {
+    "Home": "/shiftwise/",
     "GitHub": "https://github.com/irenaProj/shiftwise",
     "Live Demo": "https://shiftwise-app.vercel.app"
   },
   "categorizeByGroup": true,
-  "groupOrder": [
-    "@shiftwise/dates",
-    "Middleware",
-    "Errors",
-    "Responses",
-    "JWT"
-  ],
   "excludePrivate": true,
   "excludeInternal": true,
   "cleanOutputDir": true,

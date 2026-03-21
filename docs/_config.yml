@@ -1,0 +1,16 @@
+title: ShiftWise
+description: AI-powered shift scheduler — full-stack portfolio project
+theme: minima
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true
+
+include:
+  - api/
+
+exclude:
+  - "*.ts"
+  - node_modules/
