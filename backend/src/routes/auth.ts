@@ -1,6 +1,5 @@
 import { Router, Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
-import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import {
   signAccessToken,
@@ -9,20 +8,9 @@ import {
 } from "../lib/jwt";
 import { Unauthorized, Conflict, BadRequest } from "../lib/errors";
 import { Ok, Created } from "../lib/responses";
+import { RegisterSchema, LoginSchema } from "../validation/auth";
 
 const router = Router();
-
-const RegisterSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  name: z.string().min(1),
-  workspaceName: z.string().min(1).optional(),
-});
-
-const LoginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
 
 // POST /api/auth/register
 router.post(

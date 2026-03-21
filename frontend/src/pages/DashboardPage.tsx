@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../lib/store'
 import { api } from '../lib/api'
 import { AddEmployeeModal } from '../components/AddEmployeeModal'
+import { NavBar } from '../components/NavBar'
 
 const ROLE_BADGE: Record<string, string> = {
   OWNER:    'bg-purple-100 text-purple-700',
@@ -22,7 +23,7 @@ function Avatar({ name }: { name: string }) {
 }
 
 export function DashboardPage() {
-  const { user, workspace, clear } = useAuthStore()
+  const { user, workspace } = useAuthStore()
   const [showModal, setShowModal] = useState(false)
   const qc = useQueryClient()
 
@@ -37,37 +38,11 @@ export function DashboardPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['employees', workspace?.id] }),
   })
 
-  async function handleLogout() {
-    await api.post('/auth/logout')
-    clear()
-    window.location.href = '/login'
-  }
-
   const canManage = workspace?.role === 'OWNER' || workspace?.role === 'MANAGER'
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Top nav */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 bg-brand-500 rounded-lg flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <span className="font-semibold text-slate-900">ShiftWise</span>
-            <span className="text-slate-300">|</span>
-            <span className="text-slate-500 text-sm">{workspace?.name}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-600 hidden sm:block">{user?.name}</span>
-            <button onClick={handleLogout} className="btn-secondary text-sm py-1.5 px-3">
-              Sign out
-            </button>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Page header */}

@@ -3,6 +3,11 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth";
 import workspaceRoutes from "./routes/workspaces";
+import skillRoutes from "./routes/skills";
+import employeeSkillRoutes from "./routes/employeeSkills";
+import shiftTemplateRoutes from "./routes/shiftTemplates";
+import forecastRoutes from "./routes/forecast";
+import availabilityRoutes from "./routes/availability";
 import { requestLogger } from "./middleware/logger";
 import { AppError } from "./lib/errors";
 
@@ -23,6 +28,11 @@ app.use(requestLogger);
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/workspaces", workspaceRoutes);
+app.use("/api/workspaces/:workspaceId/skills", skillRoutes);
+app.use("/api/workspaces/:workspaceId/employees/:userId/skills", employeeSkillRoutes);
+app.use("/api/workspaces/:workspaceId/shift-templates", shiftTemplateRoutes);
+app.use("/api/workspaces/:workspaceId/forecast", forecastRoutes);
+app.use("/api/workspaces/:workspaceId/employees/:userId/availability", availabilityRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

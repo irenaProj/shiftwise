@@ -4,6 +4,11 @@ import cookieParser from 'cookie-parser'
 import { signAccessToken } from '../lib/jwt'
 import authRoutes from '../routes/auth'
 import workspaceRoutes from '../routes/workspaces'
+import skillRoutes from '../routes/skills'
+import employeeSkillRoutes from '../routes/employeeSkills'
+import shiftTemplateRoutes from '../routes/shiftTemplates'
+import forecastRoutes from '../routes/forecast'
+import availabilityRoutes from '../routes/availability'
 import { AppError } from '../lib/errors'
 
 // Build a test instance of the Express app
@@ -14,6 +19,11 @@ export function buildApp() {
   app.use(cookieParser())
   app.use('/api/auth', authRoutes)
   app.use('/api/workspaces', workspaceRoutes)
+  app.use('/api/workspaces/:workspaceId/skills', skillRoutes)
+  app.use('/api/workspaces/:workspaceId/employees/:userId/skills', employeeSkillRoutes)
+  app.use('/api/workspaces/:workspaceId/shift-templates', shiftTemplateRoutes)
+  app.use('/api/workspaces/:workspaceId/forecast', forecastRoutes)
+  app.use('/api/workspaces/:workspaceId/employees/:userId/availability', availabilityRoutes)
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     if (err instanceof AppError) {
       res.status(err.statusCode).json({ error: err.message, code: err.code })
@@ -69,6 +79,49 @@ export const fakeEmployeeMembership = {
   role: 'EMPLOYEE' as const,
   createdAt: new Date('2026-01-01'),
   workspace: fakeWorkspace,
+}
+
+export const fakeSkill = {
+  id: 'skill-1',
+  name: 'Barista',
+  workspaceId: fakeWorkspace.id,
+  createdAt: new Date('2026-01-01'),
+}
+
+export const fakeShiftTemplate = {
+  id: 'template-1',
+  name: 'Morning',
+  startTime: '06:00',
+  endTime: '14:00',
+  workspaceId: fakeWorkspace.id,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+}
+
+export const fakeAvailability = {
+  id: 'availability-1',
+  membershipId: fakeEmployeeMembership.id,
+  dayOfWeek: 1,
+  startTime: '09:00',
+  endTime: '17:00',
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+}
+
+export const fakeForecastSlot = {
+  id: 'slot-1',
+  workspaceId: fakeWorkspace.id,
+  dayOfWeek: 1,
+  time: '09:00',
+  required: 3,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+}
+
+export const fakeMembershipSkill = {
+  id: 'membership-skill-1',
+  membershipId: fakeEmployeeMembership.id,
+  skillId: fakeSkill.id,
 }
 
 // Generate a valid access token for a user

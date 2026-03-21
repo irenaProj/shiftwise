@@ -1,19 +1,12 @@
 import { Router, Response, NextFunction } from "express";
-import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, AuthRequest } from "../middleware/auth";
 import { BadRequest, Conflict } from "../lib/errors";
 import { Ok, Created, NoContent } from "../lib/responses";
+import { AddEmployeeSchema } from "../validation/workspaces";
 
 const router = Router();
-
-const AddEmployeeSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(1),
-  role: z.enum(["MANAGER", "EMPLOYEE"]).default("EMPLOYEE"),
-  password: z.string().min(8).default("changeme123"),
-});
 
 // GET /api/workspaces/:workspaceId/employees
 router.get(

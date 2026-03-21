@@ -17,9 +17,10 @@ swaps, and use AI to resolve scheduling conflicts. Built to demonstrate
 full-stack engineering across database design, REST API, auth, real-time
 updates, and a polished React UI.
 
-**Current milestone:** A manager can register, create a workspace, add and
-remove team members, and see them listed on a dashboard. Full stack wired
-end-to-end with auth, RBAC, error handling, and a test suite.
+**Current milestone:** Managers can register, create a workspace, manage team
+members, define skills and shift templates, set per-slot demand forecasts, and
+record employee availability. Full stack wired end-to-end with auth, RBAC,
+Zod validation, and a comprehensive test suite (unit, integration, E2E).
 
 ---
 
@@ -80,8 +81,8 @@ cd .. && npm run dev
 - [x] Shared dates package — UTC adapter + display facade
 - [x] Docker — multi-stage builds, docker-compose, nginx
 - [x] CI/CD — GitHub Actions, Render deploy hooks, Vercel auto-deploy
-- [x] Testing — Jest + Supertest backend tests with mocked Prisma
-- [ ] Milestone 4 — Shift templates & availability
+- [x] Testing — Jest + Supertest backend tests, Vitest + Playwright E2E
+- [x] Milestone 4 — Skills, shift templates, forecast & availability
 - [ ] Milestone 5 — Constraint-based schedule generator
 - [ ] Milestone 6 — AI integration (Claude API)
 - [ ] Milestone 7–8 — Calendar UI with drag-and-drop

@@ -186,6 +186,170 @@ In development, `500` errors also include a `stack` field.
 
 ---
 
+### Skills
+
+#### GET `/api/workspaces/:workspaceId/skills`
+
+List all skills defined in a workspace, ordered alphabetically.
+
+**Auth:** Any workspace member
+**Response `200`:**
+```json
+[{ "id": "...", "name": "Barista" }]
+```
+
+---
+
+#### POST `/api/workspaces/:workspaceId/skills`
+
+Create a new skill. Names must be unique within the workspace.
+
+**Auth:** OWNER or MANAGER
+**Body:** `{ "name": "Barista" }`
+**Response `201`:** `{ "id": "...", "name": "Barista" }`
+
+---
+
+#### DELETE `/api/workspaces/:workspaceId/skills/:skillId`
+
+Delete a skill and remove it from all employees.
+
+**Auth:** OWNER or MANAGER
+**Response `204`:** No content
+
+---
+
+### Employee skills
+
+#### GET `/api/workspaces/:workspaceId/employees/:userId/skills`
+
+List skills assigned to a specific employee.
+
+**Auth:** Any workspace member
+**Response `200`:** `[{ "id": "...", "name": "Barista" }]`
+
+---
+
+#### POST `/api/workspaces/:workspaceId/employees/:userId/skills`
+
+Assign a workspace skill to an employee.
+
+**Auth:** OWNER or MANAGER
+**Body:** `{ "skillId": "..." }`
+**Response `201`:** `{ "id": "...", "name": "Barista" }`
+
+---
+
+#### DELETE `/api/workspaces/:workspaceId/employees/:userId/skills/:skillId`
+
+Remove a skill from an employee.
+
+**Auth:** OWNER or MANAGER
+**Response `204`:** No content
+
+---
+
+### Shift templates
+
+#### GET `/api/workspaces/:workspaceId/shift-templates`
+
+List all shift templates, ordered by start time.
+
+**Auth:** Any workspace member
+**Response `200`:**
+```json
+[{ "id": "...", "name": "Morning", "startTime": "06:00", "endTime": "14:00" }]
+```
+
+---
+
+#### POST `/api/workspaces/:workspaceId/shift-templates`
+
+Create a shift template. Times must be in `HH:mm` format.
+
+**Auth:** OWNER or MANAGER
+**Body:** `{ "name": "Morning", "startTime": "06:00", "endTime": "14:00" }`
+**Response `201`:** `{ "id": "...", "name": "Morning", "startTime": "06:00", "endTime": "14:00" }`
+
+---
+
+#### DELETE `/api/workspaces/:workspaceId/shift-templates/:templateId`
+
+Delete a shift template.
+
+**Auth:** OWNER or MANAGER
+**Response `204`:** No content
+
+---
+
+### Forecast
+
+#### GET `/api/workspaces/:workspaceId/forecast`
+
+List all forecast slots, ordered by day then time.
+
+**Auth:** Any workspace member
+**Response `200`:**
+```json
+[{ "id": "...", "dayOfWeek": 1, "time": "09:00", "required": 3 }]
+```
+
+`dayOfWeek`: 0 = Sunday … 6 = Saturday. `time` is the start of a 30-minute window.
+
+---
+
+#### PUT `/api/workspaces/:workspaceId/forecast`
+
+Create or update the demand for a given day + time slot. Identified by the unique `(workspaceId, dayOfWeek, time)` key — sending the same day + time updates `required`.
+
+**Auth:** OWNER or MANAGER
+**Body:** `{ "dayOfWeek": 1, "time": "09:00", "required": 3 }`
+**Response `200`:** `{ "id": "...", "dayOfWeek": 1, "time": "09:00", "required": 3 }`
+
+---
+
+#### DELETE `/api/workspaces/:workspaceId/forecast/:slotId`
+
+Delete a forecast slot.
+
+**Auth:** OWNER or MANAGER
+**Response `204`:** No content
+
+---
+
+### Availability
+
+#### GET `/api/workspaces/:workspaceId/employees/:userId/availability`
+
+List availability windows for an employee, ordered by day then start time.
+
+**Auth:** Any workspace member
+**Response `200`:**
+```json
+[{ "id": "...", "dayOfWeek": 1, "startTime": "07:00", "endTime": "15:00" }]
+```
+
+---
+
+#### PUT `/api/workspaces/:workspaceId/employees/:userId/availability`
+
+Create or update an availability window. Identified by `(membershipId, dayOfWeek, startTime)` — sending the same day + start time updates `endTime`.
+
+**Auth:** OWNER or MANAGER
+**Body:** `{ "dayOfWeek": 1, "startTime": "07:00", "endTime": "15:00" }`
+**Response `200`:** `{ "id": "...", "dayOfWeek": 1, "startTime": "07:00", "endTime": "15:00" }`
+
+---
+
+#### DELETE `/api/workspaces/:workspaceId/employees/:userId/availability/:availabilityId`
+
+Delete an availability window.
+
+**Auth:** OWNER or MANAGER
+**Response `204`:** No content
+
+---
+
 ## Health check
 
 #### GET `/api/health`

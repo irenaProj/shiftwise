@@ -14,6 +14,26 @@ export const fakeWorkspace = {
   role: "MANAGER",
 };
 
+export const fakeSkills = [
+  { id: 'skill-1', name: 'Barista' },
+  { id: 'skill-2', name: 'Cashier' },
+]
+
+export const fakeShiftTemplates = [
+  { id: 'template-1', name: 'Morning', startTime: '06:00', endTime: '14:00' },
+  { id: 'template-2', name: 'Afternoon', startTime: '14:00', endTime: '22:00' },
+]
+
+export const fakeForecastSlots = [
+  { id: 'slot-1', dayOfWeek: 1, time: '09:00', required: 3 },
+  { id: 'slot-2', dayOfWeek: 1, time: '12:00', required: 2 },
+]
+
+export const fakeAvailability = [
+  { id: 'avail-1', dayOfWeek: 1, startTime: '07:00', endTime: '15:00' },
+  { id: 'avail-2', dayOfWeek: 2, startTime: '07:00', endTime: '15:00' },
+]
+
 export const fakeEmployees = [
   {
     id: "user-1",
@@ -122,6 +142,67 @@ export const handlers = [
 
   // Delete employee
   http.delete(`${BASE}/api/workspaces/:workspaceId/employees/:userId`, () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Skills
+  http.get(`${BASE}/api/workspaces/:workspaceId/skills`, () => {
+    return HttpResponse.json(fakeSkills);
+  }),
+  http.post(`${BASE}/api/workspaces/:workspaceId/skills`, async ({ request }) => {
+    const body = (await request.json()) as { name: string };
+    return HttpResponse.json({ id: 'skill-new', name: body.name }, { status: 201 });
+  }),
+  http.delete(`${BASE}/api/workspaces/:workspaceId/skills/:skillId`, () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Employee skills
+  http.get(`${BASE}/api/workspaces/:workspaceId/employees/:userId/skills`, () => {
+    return HttpResponse.json([fakeSkills[0]]);
+  }),
+  http.post(`${BASE}/api/workspaces/:workspaceId/employees/:userId/skills`, async ({ request }) => {
+    const body = (await request.json()) as { skillId: string };
+    const skill = fakeSkills.find(s => s.id === body.skillId) ?? { id: body.skillId, name: 'Unknown' };
+    return HttpResponse.json(skill, { status: 201 });
+  }),
+  http.delete(`${BASE}/api/workspaces/:workspaceId/employees/:userId/skills/:skillId`, () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Shift templates
+  http.get(`${BASE}/api/workspaces/:workspaceId/shift-templates`, () => {
+    return HttpResponse.json(fakeShiftTemplates);
+  }),
+  http.post(`${BASE}/api/workspaces/:workspaceId/shift-templates`, async ({ request }) => {
+    const body = (await request.json()) as { name: string; startTime: string; endTime: string };
+    return HttpResponse.json({ id: 'template-new', ...body }, { status: 201 });
+  }),
+  http.delete(`${BASE}/api/workspaces/:workspaceId/shift-templates/:templateId`, () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Forecast
+  http.get(`${BASE}/api/workspaces/:workspaceId/forecast`, () => {
+    return HttpResponse.json(fakeForecastSlots);
+  }),
+  http.put(`${BASE}/api/workspaces/:workspaceId/forecast`, async ({ request }) => {
+    const body = (await request.json()) as { dayOfWeek: number; time: string; required: number };
+    return HttpResponse.json({ id: 'slot-new', ...body });
+  }),
+  http.delete(`${BASE}/api/workspaces/:workspaceId/forecast/:slotId`, () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // Availability
+  http.get(`${BASE}/api/workspaces/:workspaceId/employees/:userId/availability`, () => {
+    return HttpResponse.json(fakeAvailability);
+  }),
+  http.put(`${BASE}/api/workspaces/:workspaceId/employees/:userId/availability`, async ({ request }) => {
+    const body = (await request.json()) as { dayOfWeek: number; startTime: string; endTime: string };
+    return HttpResponse.json({ id: 'avail-new', ...body });
+  }),
+  http.delete(`${BASE}/api/workspaces/:workspaceId/employees/:userId/availability/:availabilityId`, () => {
     return new HttpResponse(null, { status: 204 });
   }),
 ];

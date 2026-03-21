@@ -22,10 +22,21 @@ The core schema is built around multi-tenant workspaces — a single deployment
 serves multiple organisations with full data isolation.
 
 ```
-users         → id, email, password_hash, name, timezone
-workspaces    → id, name, timezone
-memberships   → user_id, workspace_id, role (OWNER|MANAGER|EMPLOYEE)
-refresh_tokens → id, token, user_id, expires_at
+users           → id, email, password_hash, name, timezone
+workspaces      → id, name, timezone
+memberships     → user_id, workspace_id, role (OWNER|MANAGER|EMPLOYEE)
+refresh_tokens  → id, token, user_id, expires_at
+
+skills          → id, workspace_id, name  [unique: (workspace_id, name)]
+membership_skills → membership_id, skill_id  (join table)
+
+shift_templates → id, workspace_id, name, start_time, end_time
+
+forecast_slots  → id, workspace_id, day_of_week, time, required
+                  [unique: (workspace_id, day_of_week, time)]
+
+availability    → id, membership_id, day_of_week, start_time, end_time
+                  [unique: (membership_id, day_of_week, start_time)]
 ```
 
 Key design decisions:
@@ -37,6 +48,11 @@ Key design decisions:
   priority — this handles managers in one city scheduling staff in another.
 - `refresh_tokens` are stored in the database so they can be explicitly revoked
   on logout and rotated on each use.
+- `skills` are workspace-scoped and linked to employees via the `membership_skills`
+  join table — skills don't follow employees between workspaces.
+- `forecast_slots` and `availability` both use composite unique keys to enable
+  natural upsert semantics via `PUT` endpoints — the client doesn't need to know
+  the record ID to update an existing slot.
 
 ---
 
@@ -165,10 +181,31 @@ shiftwise/
 │   │   ├── middleware/
 │   │   │   ├── auth.ts        # requireAuth + requireRole middleware
 │   │   │   └── logger.ts      # Request logger with method, status, duration
+│   │   ├── validation/
+│   │   │   ├── auth.ts        # RegisterSchema, LoginSchema
+│   │   │   ├── workspaces.ts  # AddEmployeeSchema
+│   │   │   ├── skills.ts      # CreateSkillSchema
+│   │   │   ├── employeeSkills.ts # AddEmployeeSkillSchema
+│   │   │   ├── shiftTemplates.ts # CreateShiftTemplateSchema
+│   │   │   ├── forecast.ts    # UpsertForecastSlotSchema
+│   │   │   └── availability.ts # CreateAvailabilitySchema
 │   │   ├── routes/
 │   │   │   ├── auth.ts        # Register, login, refresh, logout
-│   │   │   └── workspaces.ts  # Employee CRUD
+│   │   │   ├── workspaces.ts  # Employee CRUD
+│   │   │   ├── skills.ts      # Workspace skill CRUD
+│   │   │   ├── employeeSkills.ts # Employee skill assignment
+│   │   │   ├── shiftTemplates.ts # Shift template CRUD
+│   │   │   ├── forecast.ts    # Forecast slot upsert/delete
+│   │   │   └── availability.ts # Employee availability upsert/delete
 │   │   └── index.ts           # Express app + global error handler
+│   ├── src/tests/
+│   │   ├── auth/
+│   │   ├── workspaces/
+│   │   ├── skills/            # skills.test.ts, employeeSkills.test.ts
+│   │   ├── shiftTemplates/
+│   │   ├── forecast/
+│   │   ├── availability/
+│   │   └── helpers.ts         # buildApp(), fixtures, mock Prisma
 │   ├── Dockerfile
 │   ├── .dockerignore
 │   └── .env.example
@@ -176,14 +213,30 @@ shiftwise/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── AddEmployeeModal.tsx
+│   │   │   ├── NavBar.tsx     # Shared nav with active-link highlighting
 │   │   │   └── ProtectedRoute.tsx
+│   │   ├── hooks/
+│   │   │   ├── useEmployees.ts
+│   │   │   ├── useSkills.ts
+│   │   │   ├── useEmployeeSkills.ts
+│   │   │   ├── useShiftTemplates.ts
+│   │   │   ├── useForecast.ts
+│   │   │   └── useAvailability.ts
 │   │   ├── lib/
 │   │   │   ├── api.ts         # Axios + refresh interceptor
-│   │   │   └── store.ts       # Zustand auth store
+│   │   │   ├── store.ts       # Zustand auth store
+│   │   │   └── types.ts       # Shared TS types (Employee, Skill, etc.)
 │   │   ├── pages/
 │   │   │   ├── LoginPage.tsx
 │   │   │   ├── RegisterPage.tsx
-│   │   │   └── DashboardPage.tsx
+│   │   │   ├── DashboardPage.tsx
+│   │   │   ├── SkillsPage.tsx
+│   │   │   ├── ShiftTemplatesPage.tsx
+│   │   │   ├── ForecastPage.tsx
+│   │   │   └── AvailabilityPage.tsx
+│   │   ├── tests/
+│   │   │   ├── msw/           # MSW handlers + server setup
+│   │   │   └── pages/         # Vitest component tests
 │   │   ├── App.tsx
 │   │   └── main.tsx
 │   ├── Dockerfile
@@ -219,6 +272,11 @@ before it's invalidated.
 Zod validates all inputs at the boundary, and the frontend uses the same shapes
 via inferred types. A schema change propagates through the whole stack at
 compile time.
+
+**Upsert over create:** Forecast slots and availability windows use `PUT` with
+composite unique keys rather than `POST` — the client sends the natural key
+(day + time or day + startTime) and the server creates or updates as needed.
+This removes the need for the frontend to track record IDs for editing.
 
 **Middleware composition:** `requireAuth` and `requireRole` are composable
 middlewares that attach data to the request object — route handlers receive a
