@@ -116,11 +116,182 @@ jobs:
           PORT: 3001
 
       - name: Serve frontend
-        run: cd frontend && npx vite preview --port 4173 &
+        run: cd frontend && npx vite preview --port 4173 --host &
 
       - name: Wait for servers to be ready
         run: |
-          npx wait-on http://localhost:3001/api/health http://localhost:4173 --timeout 30000
+          npx wait-on http://localhost:3001/api/health http://localhost:4173 --timeout 60000
+          sleep 2
+
+      - name: Debug — verify servers and test login
+        run: |
+          echo "=== Backend health ==="
+          curl -s http://localhost:3001/api/health
+          echo ""
+          echo "=== Frontend status ==="
+          curl -s -o /dev/null -w "%{http_code}" http://localhost:4173
+          echo ""
+          echo "=== Test login ==="
+          curl -s -X POST http://localhost:3001/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"will.power@demo.com","password":"password123"}'
+          echo ""
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run E2E tests
+        run: npx playwright test
+        env:
+          E2E_BASE_URL: http://localhost:4173
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+EOFcat > /workspaces/shiftwise/.github/workflows/ci.yml << 'EOF'
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend type check & build ───────────────────────────────────────────
+  backend:
+    name: Backend — type check & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: cd backend && npx prisma generate
+      - name: Type check & build
+        run: cd backend && npm run build
+
+  # ── Backend Jest tests ───────────────────────────────────────────────────
+  backend-test:
+    name: Backend — Jest tests
+    runs-on: ubuntu-latest
+    needs: [backend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma client
+        run: cd backend && npx prisma generate
+      - name: Run tests
+        run: cd backend && npm test
+
+  # ── Frontend type check & build ──────────────────────────────────────────
+  frontend:
+    name: Frontend — type check & build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Type check & build
+        run: cd frontend && npm run build
+
+  # ── Frontend Vitest tests ────────────────────────────────────────────────
+  frontend-test:
+    name: Frontend — Vitest tests
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: cd frontend && npm test
+
+  # ── E2E tests against isolated test backend ──────────────────────────────
+  e2e:
+    name: E2E — Playwright (isolated test backend)
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: cd backend && npx prisma generate
+
+      - name: Build backend
+        run: cd backend && npm run build
+
+      - name: Build frontend
+        run: cd frontend && npm run build
+        env:
+          VITE_API_URL: http://localhost:3001
+
+      - name: Reset and seed E2E test database
+        run: npx tsx e2e/seed.ts
+        env:
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+
+      - name: Start backend
+        run: node backend/dist/index.js &
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          FRONTEND_URL: http://localhost:4173
+          NODE_ENV: production
+          PORT: 3001
+
+      - name: Serve frontend
+        run: cd frontend && npx vite preview --port 4173 --host &
+
+      - name: Wait for servers to be ready
+        run: |
+          npx wait-on http://localhost:3001/api/health http://localhost:4173 --timeout 60000
+          sleep 2
+
+      - name: Debug — verify servers and test login
+        run: |
+          echo "=== Backend health ==="
+          curl -s http://localhost:3001/api/health
+          echo ""
+          echo "=== Frontend status ==="
+          curl -s -o /dev/null -w "%{http_code}" http://localhost:4173
+          echo ""
+          echo "=== Test login ==="
+          curl -s -X POST http://localhost:3001/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"will.power@demo.com","password":"password123"}'
+          echo ""
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
