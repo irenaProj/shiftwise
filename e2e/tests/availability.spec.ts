@@ -63,10 +63,10 @@ test.describe("Availability", () => {
   test("switches availability when employee changes", async ({
     authenticatedPage: page,
   }) => {
-    // Lou has availability seeded; Fran does not
+    // Lou has availability seeded; Zack does not (and no other test adds Zack's availability)
     await page
       .getByRole("combobox", { name: /employee/i })
-      .selectOption({ label: "Fran Tastic" });
+      .selectOption({ label: "Zack Lee" });
     await expect(page.getByText("No availability set.")).toBeVisible();
   });
 });
