@@ -2,6 +2,11 @@
 const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.test.json',
+    },
+  },
   rootDir: 'src',
   testMatch: ['**/tests/**/*.test.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
