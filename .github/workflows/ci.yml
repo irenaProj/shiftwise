@@ -7,6 +7,7 @@ on:
     branches: [main]
 
 jobs:
+  # ── Backend type check & build ───────────────────────────────────────────
   backend:
     name: Backend — type check & build
     runs-on: ubuntu-latest
@@ -23,6 +24,7 @@ jobs:
       - name: Type check & build
         run: cd backend && npm run build
 
+  # ── Backend Jest tests ───────────────────────────────────────────────────
   backend-test:
     name: Backend — Jest tests
     runs-on: ubuntu-latest
@@ -40,6 +42,7 @@ jobs:
       - name: Run tests
         run: cd backend && npm test
 
+  # ── Frontend type check & build ──────────────────────────────────────────
   frontend:
     name: Frontend — type check & build
     runs-on: ubuntu-latest
@@ -53,3 +56,47 @@ jobs:
         run: npm ci
       - name: Type check & build
         run: cd frontend && npm run build
+
+  # ── Frontend Vitest tests ────────────────────────────────────────────────
+  frontend-test:
+    name: Frontend — Vitest tests
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests
+        run: cd frontend && npm test
+
+  # ── E2E tests against production ─────────────────────────────────────────
+  e2e:
+    name: E2E — Playwright (production)
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+      - name: Run E2E tests
+        run: npx playwright test
+        env:
+          E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://shiftwise-app.vercel.app' }}
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

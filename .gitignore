@@ -4,4 +4,10 @@ dist/
 *.env.local
 .DS_Store
 *.log
-docker-compose.override.yml
+docker-compose.override.yml# Playwright
+playwright-report/
+test-results/
+EOFcat >> /workspaces/shiftwise/.gitignore << 'EOF'
+# Playwright
+playwright-report/
+test-results/
