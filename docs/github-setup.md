@@ -77,6 +77,24 @@ automatically when files in `packages/dates/src/`, `backend/src/lib/`, or
 
 ---
 
+### Manually triggering TypeDoc regeneration
+
+TypeDoc only regenerates automatically when files in `packages/dates/src/`,
+`backend/src/lib/`, or `backend/src/middleware/` change. For all other doc
+updates (e.g. updating markdown files), regenerate manually:
+
+**Option A — GitHub Actions:**
+GitHub repo → **Actions → Docs → Run workflow → Run workflow**
+
+**Option B — locally:**
+```bash
+npx typedoc
+git add docs/api/
+git commit -m "chore: regenerate TypeDoc"
+git push
+```
+---
+
 ## Actions permissions
 
 Go to: **GitHub repo → Settings → Actions → General**
