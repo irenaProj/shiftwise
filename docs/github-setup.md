@@ -9,47 +9,71 @@ to the repo but are required for CI/CD, docs, and deployment to work correctly.
 
 Go to: **GitHub repo → Settings → Secrets and variables → Actions → Repository secrets**
 
-| Secret                       | Value                  | Used by                                    |
-| ---------------------------- | ---------------------- | ------------------------------------------ |
-| `RENDER_DEPLOY_HOOK_BACKEND` | Render deploy hook URL | `deploy.yml` — triggers backend redeploy   |
-| `DATABASE_URL`               | Neon connection string | `ci.yml` — Jest tests (if E2E added later) |
-| `JWT_ACCESS_SECRET`          | 64-char hex string     | `ci.yml` — backend test runner             |
-| `JWT_REFRESH_SECRET`         | 64-char hex string     | `ci.yml` — backend test runner             |
+| Secret                       | Value                                 | Used by                                  |
+| ---------------------------- | ------------------------------------- | ---------------------------------------- |
+| `RENDER_DEPLOY_HOOK_BACKEND` | Render deploy hook URL                | `deploy.yml` — triggers backend redeploy |
+| `JWT_ACCESS_SECRET`          | 64-char hex string                    | Backend on Render + E2E CI               |
+| `JWT_REFRESH_SECRET`         | 64-char hex string                    | Backend on Render + E2E CI               |
+| `E2E_DATABASE_URL`           | Neon testing branch connection string | `ci.yml` — E2E isolated backend          |
+
+> **Critical:** `E2E_DATABASE_URL` must be added as a GitHub secret. Without it
+> the E2E backend starts with an empty `DATABASE_URL` and all login attempts fail
+> silently — tests stay on `/login` with no error shown.
 
 ### Getting each value
 
 **`RENDER_DEPLOY_HOOK_BACKEND`**
 Render dashboard → your backend service → **Settings** → scroll to **Deploy Hook** → copy URL
 
-**`DATABASE_URL`**
-Neon dashboard → your project → **Connection string** → copy URI format
-
-**JWT secrets**
+**`JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`**
 Generate fresh values:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
+**`E2E_DATABASE_URL`**
+Neon dashboard → your project → **Branches → testing** → Connection string
+
+---
+
+## Repository variables
+
+Go to: **GitHub repo → Settings → Secrets and variables → Actions → Variables tab**
+
+| Variable       | Value                              | Used by                                                    |
+| -------------- | ---------------------------------- | ---------------------------------------------------------- |
+| `E2E_BASE_URL` | `https://shiftwise-app.vercel.app` | `ci.yml` — Playwright smoke tests vs production (optional) |
+
 ---
 
 ## GitHub Pages
 
-Required for TypeDoc API documentation to be published.
+Required for the docs site and TypeDoc API documentation.
 
 Go to: **GitHub repo → Settings → Pages**
 
-| Setting | Value              |
-| ------- | ------------------ |
-| Source  | **GitHub Actions** |
+| Setting | Value                    |
+| ------- | ------------------------ |
+| Source  | **Deploy from a branch** |
+| Branch  | `main`                   |
+| Folder  | `/docs`                  |
 
-Once set, the `docs.yml` workflow publishes to:
+Once set, the docs site is available at:
 
 ```
-https://YOUR_USERNAME.github.io/shiftwise/
+https://irenaproj.github.io/shiftwise/
 ```
 
-The docs are rebuilt and republished automatically on every push to `main`.
+TypeDoc API docs are at:
+
+```
+https://irenaproj.github.io/shiftwise/api/
+```
+
+The `docs.yml` workflow regenerates TypeDoc and commits it back to `docs/api/`
+automatically when files in `packages/dates/src/`, `backend/src/lib/`, or
+`backend/src/middleware/` change.
 
 ---
 
@@ -62,8 +86,8 @@ Go to: **GitHub repo → Settings → Actions → General**
 | Actions permissions  | **Allow all actions and reusable workflows** |
 | Workflow permissions | **Read and write permissions**               |
 
-The **Read and write permissions** setting is required for the `docs.yml`
-workflow to publish to GitHub Pages.
+**Read and write permissions** is required for the `docs.yml` workflow to
+commit TypeDoc output back to the repo.
 
 ---
 
@@ -73,14 +97,42 @@ Go to: **GitHub repo → Settings → Branches → Add branch ruleset**
 
 Suggested rules for `main`:
 
-| Rule                              | Value                                                                                            |
-| --------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Require status checks to pass     | ✅ — add `Backend — type check & build`, `Frontend — type check & build`, `Backend — Jest tests` |
-| Require branches to be up to date | ✅                                                                                               |
-| Block force pushes                | ✅                                                                                               |
+| Rule                              | Value                                                                                                                                           |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Require status checks to pass     | ✅ — add `Backend — type check & build`, `Frontend — type check & build`, `Backend — Jest tests`, `Frontend — Vitest tests`, `E2E — Playwright` |
+| Require branches to be up to date | ✅                                                                                                                                              |
+| Block force pushes                | ✅                                                                                                                                              |
 
-This ensures no code reaches `main` without passing CI — the deploy workflow
-only runs on `main`, so broken code never gets deployed.
+This ensures no code reaches `main` without passing all CI jobs — the deploy
+workflow only runs on `main`, so broken code never gets deployed.
+
+---
+
+## Neon database branches
+
+### Production branch
+
+Used by the live app on Render.
+
+Neon dashboard → your project → **Branches → production** → Connection string
+
+Add to Render environment variables as `DATABASE_URL`.
+
+### Testing branch
+
+Used exclusively by E2E tests in CI and locally — completely isolated from
+production data.
+
+1. Neon dashboard → your project → **Branches → Create branch**
+2. Name: `testing`, Parent: `production`
+3. Data: **Schema only** — the seed script handles data
+4. **Uncheck** auto-delete
+5. Copy the connection string
+6. Add as `E2E_DATABASE_URL` in GitHub repository secrets
+7. Add to root `.env` locally as `E2E_DATABASE_URL=...`
+
+The testing branch is wiped and reseeded with known data before every
+Playwright run — tests always start from a clean predictable state.
 
 ---
 
@@ -95,48 +147,40 @@ Go to: **GitHub repo → Settings → Codespaces**
 
 ### Codespace secrets
 
-If you want the Codespace to connect to Neon automatically on startup without
-manually editing `backend/.env`, add secrets at:
+Add at: **github.com → Settings → Codespaces → Secrets → New secret**
 
-**github.com → Settings → Codespaces → Secrets → New secret**
+| Secret               | Value                                  |
+| -------------------- | -------------------------------------- |
+| `DATABASE_URL`       | Your Neon production connection string |
+| `JWT_ACCESS_SECRET`  | Your JWT access secret                 |
+| `JWT_REFRESH_SECRET` | Your JWT refresh secret                |
 
-| Secret               | Value                       |
-| -------------------- | --------------------------- |
-| `DATABASE_URL`       | Your Neon connection string |
-| `JWT_ACCESS_SECRET`  | Your JWT access secret      |
-| `JWT_REFRESH_SECRET` | Your JWT refresh secret     |
-
-These are injected as environment variables when the Codespace starts and can
-be referenced in `.devcontainer/setup.sh`.
+These are injected as environment variables when the Codespace starts.
+The `backend/.env` file still needs to be created manually (or via
+`.devcontainer/setup.sh`) — these secrets just make the values available.
 
 ---
 
 ## Vercel
 
-Go to: **vercel.com → your project → Settings**
-
-### Environment variables
+Go to: **vercel.com → your project → Settings → Environment Variables**
 
 | Variable       | Value                                 | Environment |
 | -------------- | ------------------------------------- | ----------- |
 | `VITE_API_URL` | `https://shiftwise-0sin.onrender.com` | Production  |
 
-### Git integration
-
-Vercel auto-deploys on every push to `main` — no additional setup needed.
+Vercel auto-deploys on every push to `main` via its GitHub integration.
 The frontend root directory is set to `frontend` during initial project creation.
 
 ---
 
 ## Render
 
-Go to: **render.com → your backend service → Settings**
-
-### Environment variables
+Go to: **render.com → your backend service → Settings → Environment Variables**
 
 | Variable             | Value                              |
 | -------------------- | ---------------------------------- |
-| `DATABASE_URL`       | Neon connection string             |
+| `DATABASE_URL`       | Neon production connection string  |
 | `JWT_ACCESS_SECRET`  | 64-char hex string                 |
 | `JWT_REFRESH_SECRET` | 64-char hex string                 |
 | `FRONTEND_URL`       | `https://shiftwise-app.vercel.app` |
@@ -146,39 +190,11 @@ Go to: **render.com → your backend service → Settings**
 ### Auto-deploy
 
 Render auto-deploy should be **disabled** — deploys are triggered exclusively
-via the GitHub Actions deploy hook to keep the CI/CD pipeline as the single
-source of truth.
+via the GitHub Actions deploy hook to keep CI/CD as the single source of truth.
 
 Go to: **Settings → Auto-Deploy** → set to **No**
 
-## Addition to Repository secrets table
+### Deploy hook
 
-Add these two new secrets to the existing table in github-setup.md:
-
-| Secret             | Value                                 | Used by                                         |
-| ------------------ | ------------------------------------- | ----------------------------------------------- |
-| `E2E_DATABASE_URL` | Neon testing branch connection string | `ci.yml` — Playwright resets test DB before E2E |
-
-And add this new variable to the Repository variables table:
-
-| Variable       | Value                              | Used by                                           |
-| -------------- | ---------------------------------- | ------------------------------------------------- |
-| `E2E_BASE_URL` | `https://shiftwise-app.vercel.app` | `ci.yml` — Playwright runs against this URL in CI |
-
-## Addition to Neon section
-
-### Testing branch
-
-Create a dedicated branch for E2E test isolation:
-
-1. Neon dashboard → your project → **Branches → Create branch**
-2. Name: `testing`
-3. Parent: `production`
-4. Data: **Schema only** — seed script handles data
-5. **Uncheck** auto-delete
-6. Copy the connection string
-7. Add as `E2E_DATABASE_URL` in GitHub repository secrets
-8. Add to root `.env` locally
-
-The testing branch is wiped and reseeded with known data before every
-Playwright run — tests always start from a clean predictable state.
+Go to: **Settings → Deploy Hook** → copy the URL → add as
+`RENDER_DEPLOY_HOOK_BACKEND` in GitHub repository secrets.

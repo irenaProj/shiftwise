@@ -125,6 +125,15 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 ```
 
+The axios instance base URL is set to `http://localhost:3001/api` in the test
+setup so MSW can intercept requests correctly (jsdom has no base URL):
+
+```typescript
+// setup.ts
+import { api } from "../lib/api";
+api.defaults.baseURL = "http://localhost:3001/api";
+```
+
 Override handlers per-test to simulate errors:
 
 ```typescript
@@ -133,33 +142,6 @@ server.use(
     return HttpResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }),
 );
-```
-
-### Key patterns
-
-**Rendering with providers:**
-
-```typescript
-// Wraps component with QueryClient + MemoryRouter
-renderWithProviders(<LoginPage />)
-```
-
-**Setting auth state:**
-
-```typescript
-// Populate Zustand store before rendering
-setAuthenticatedUser("MANAGER");
-```
-
-**User interactions:**
-
-```typescript
-const user = userEvent.setup();
-await user.type(
-  screen.getByPlaceholderText("you@company.com"),
-  "test@demo.com",
-);
-await user.click(screen.getByRole("button", { name: /sign in/i }));
 ```
 
 ### Running tests
@@ -177,58 +159,9 @@ cd frontend && npm run test:coverage
 
 ### What's covered
 
-**Store (`store.test.ts`):**
-
-- Initial state is null
-- `setAuth` stores all values
-- `setAccessToken` updates token only
-- `clear` resets everything
-- Accepts null workspace
-
-**ProtectedRoute (`ProtectedRoute.test.tsx`):**
-
-- Redirects unauthenticated users to `/login`
-- Renders children for authenticated users
-- Redirects when workspace is null
-
-**LoginPage (`LoginPage.test.tsx`):**
-
-- Renders form correctly
-- Shows demo credentials
-- Navigates to dashboard on success
-- Shows error on invalid credentials
-- Shows loading state while submitting
-- Shows generic error when no message returned
-- Has link to register page
-
-**RegisterPage (`RegisterPage.test.tsx`):**
-
-- Renders form correctly
-- Navigates to dashboard on success
-- Shows error when email already in use
-- Has link to login page
-- Shows loading state while submitting
-
-**DashboardPage (`DashboardPage.test.tsx`):**
-
-- Renders workspace name and user name
-- Loads and displays employees
-- Shows correct stats strip counts
-- Shows Add member button for managers
-- Hides Add member button for employees
-- Opens modal when Add member clicked
-- Shows delete buttons for other employees
-- Does not show delete button for self
-- Clears auth on logout
-
-**AddEmployeeModal (`AddEmployeeModal.test.tsx`):**
-
-- Renders form fields
-- Calls onClose when cancel clicked
-- Calls onClose when X clicked
-- Submits form and closes on success
-- Shows error for duplicate employee
-- Shows loading state while submitting
+36 tests covering: store state management, protected route redirects, login/register
+form submission and error states, dashboard employee list, add/delete employee,
+modal open/close, loading states, and RBAC visibility.
 
 ---
 
@@ -240,8 +173,8 @@ Tests live at the root level alongside `backend/` and `frontend/`:
 
 ```
 e2e/
-├── global-setup.ts      # Resets and reseeds test DB before every run
-├── seed.ts              # Wipes and reseeds known test data
+├── global-setup.ts      # Resets test DB locally (skipped in CI)
+├── seed.ts              # Wipes all data and reseeds known test state
 ├── fixtures/
 │   └── auth.ts          # Pre-authenticated page fixture + login helper
 └── tests/
@@ -249,11 +182,11 @@ e2e/
     └── employees.spec.ts # List, add, conflict, cancel
 ```
 
-### Test database (Neon branch)
+### Test database (Neon testing branch)
 
 E2E tests run against a dedicated **Neon testing branch** — completely isolated
-from production data. Before every test run, `global-setup.ts` wipes all data
-and reseeds a known clean state:
+from production data. The test DB is reset and reseeded with known data before
+every run:
 
 ```
 Manager:   will.power@demo.com / password123
@@ -261,123 +194,112 @@ Employees: lou.poles, fran.tastic, zack.lee @demo.com / password123
 Workspace: Demo Cafe (Australia/Sydney)
 ```
 
-This means tests always start from a predictable state regardless of what
-previous test runs added or deleted.
+### How the test DB is reset
 
-### Running tests
+**Locally:** `global-setup.ts` runs automatically before Playwright starts and
+calls `e2e/seed.ts` against `E2E_DATABASE_URL`.
 
-```bash
-# Run all E2E tests (resets DB first, starts dev server automatically)
-npm run e2e
-
-# Show Playwright report after a run
-npm run e2e:report
-```
-
-> **Note:** `npm run dev` does not need to be running — Playwright starts the
-> dev server automatically when `E2E_DATABASE_URL` is set and `CI` is not set.
-
-> **Codespaces:** Make sure `npm run dev` is running in another terminal before
-> running `npm run e2e` in Codespaces, as the auto-start may not work reliably.
+**In CI:** The workflow resets the DB as a dedicated step before starting servers.
+`global-setup.ts` detects `CI=true` and skips to avoid double-reset.
 
 ### Required environment variables
 
-| Variable           | Where       | Description                           |
-| ------------------ | ----------- | ------------------------------------- |
-| `E2E_DATABASE_URL` | Root `.env` | Neon testing branch connection string |
-| `E2E_BASE_URL`     | CI only     | Production URL to run E2E against     |
+| Variable           | Where                       | Description                           |
+| ------------------ | --------------------------- | ------------------------------------- |
+| `E2E_DATABASE_URL` | Root `.env` + GitHub secret | Neon testing branch connection string |
+
+> **Important:** `E2E_DATABASE_URL` must be added as both a local root `.env`
+> variable AND a GitHub repository secret. Missing the GitHub secret causes the
+> CI backend to start with an empty `DATABASE_URL` — all login attempts fail silently.
+
+### Running tests locally
+
+```bash
+# Ensure E2E_DATABASE_URL is set in root .env
+npm run e2e
+
+# Show report after a run
+npm run e2e:report
+```
+
+> **Codespaces:** Run `npm run dev` in one terminal first, then `npm run e2e`
+> in another.
 
 ### What's covered
 
 **Auth (`auth.spec.ts`):**
 
-- Login page renders correctly
-- Shows demo credentials
-- Successful login navigates to dashboard
-- ~~Invalid credentials shows error~~ _(skipped — axios interceptor conflict, see known issues)_
-- Unauthenticated user redirected to login
-- Logout redirects to login
+- Login page renders correctly ✅
+- Shows demo credentials ✅
+- Successful login navigates to dashboard ✅
+- ~~Invalid credentials shows error~~ _(skipped — see known issues)_
+- Unauthenticated user redirected to login ✅
+- Logout redirects to login ✅
 
 **Employees (`employees.spec.ts`):**
 
-- Dashboard shows employee list
-- Shows stats strip with correct counts
-- Manager can open Add member modal
-- Manager can add a new employee
-- Shows conflict error for duplicate email
-- Cancel button closes modal
+- Dashboard shows employee list ✅
+- Shows stats strip with correct counts ✅
+- Manager can open Add member modal ✅
+- Manager can add a new employee ✅
+- Shows conflict error for duplicate email ✅
+- Cancel button closes modal ✅
 
 ### Known issues
 
-**Invalid credentials test skipped:** The axios refresh interceptor catches
+**Invalid credentials test skipped:** The axios refresh interceptor catches all
 401 responses and redirects to `/login` before the error state can render in
-the browser. This affects the E2E test only — the Vitest unit test covers this
-scenario correctly. Fix: update the interceptor in `src/lib/api.ts` to not
-trigger on auth route failures (`/api/auth/login`, `/api/auth/register`).
+the browser. The Vitest unit test covers this scenario correctly.
 
-### Artifacts on failure
-
-When a test fails in CI, Playwright captures:
-
-- **Screenshot** — what the browser showed at the point of failure
-- **Video** — full recording of the test run
-- **Trace** — step-by-step execution log
-
-These are uploaded as a GitHub Actions artifact called `playwright-report`
-and available for 7 days after the run.
+**Fix:** Update `src/lib/api.ts` to not trigger the refresh interceptor on
+`/api/auth/login` and `/api/auth/register` failures.
 
 ---
 
-## Running in CI
-
-The full CI pipeline runs on every push and PR:
+## CI pipeline
 
 ```
-backend build → backend tests (Jest)
-frontend build → frontend tests (Vitest)
-                              ↓
-                         E2E tests (Playwright, against production)
+backend build ──────────────────► backend tests (Jest)   ──┐
+                                                             ├──► E2E (Playwright)
+frontend build ─────────────────► frontend tests (Vitest) ─┘
 ```
 
-### CI jobs
+### Jobs
 
-| Job                           | Trigger               | What runs                         |
-| ----------------------------- | --------------------- | --------------------------------- |
-| Backend — type check & build  | Every push/PR         | `tsc`                             |
-| Backend — Jest tests          | After build passes    | 18 Jest tests                     |
-| Frontend — type check & build | Every push/PR         | `vite build`                      |
-| Frontend — Vitest tests       | After build passes    | 36 Vitest tests                   |
-| E2E — Playwright              | After unit tests pass | 11 Playwright tests vs production |
+| Job                           | Trigger               | What runs                     |
+| ----------------------------- | --------------------- | ----------------------------- |
+| Backend — type check & build  | Every push/PR         | `tsc`                         |
+| Backend — Jest tests          | After build           | 18 Jest tests (mocked Prisma) |
+| Frontend — type check & build | Every push/PR         | `vite build`                  |
+| Frontend — Vitest tests       | After build           | 36 Vitest tests (MSW)         |
+| E2E — Playwright              | After unit tests pass | 11 Playwright tests           |
 
-### Failing tests in CI
+### How E2E runs in CI (isolated test backend)
 
-**Jest failure:**
+The E2E job spins up a fully isolated environment — no production data involved:
 
-1. GitHub repo → **Actions** tab → failing run
-2. Expand **Backend — Jest tests** job
-3. Read failure output in logs
+1. Builds backend (`tsc`)
+2. Builds frontend with `VITE_API_URL=http://localhost:3001`
+3. Resets and reseeds the Neon test branch via `e2e/seed.ts`
+4. Starts backend on port 3001 connected to test branch (`E2E_DATABASE_URL`)
+5. Serves frontend via `vite preview` on port 4173
+6. Waits for both servers ready
+7. Runs Playwright against `http://localhost:4173`
 
-**Vitest failure:**
+### Playwright failure artifacts
 
-1. GitHub repo → **Actions** tab → failing run
-2. Expand **Frontend — Vitest tests** job
+When a test fails in CI, these are uploaded as the `playwright-report` artifact
+(retained 7 days):
 
-**Playwright failure:**
-
-1. GitHub repo → **Actions** tab → failing run
-2. Expand **E2E — Playwright** job
-3. Download **playwright-report** artifact for screenshots and traces
+- **Screenshot** — browser state at point of failure
+- **Video** — full test run recording
+- **Trace** — step-by-step log, view with `npx playwright show-trace trace.zip`
 
 ---
 
 ## Adding new tests
 
-### Adding a backend test
-
-1. Add fake data to `helpers.ts` if needed
-2. Create a new `describe` block in the relevant test file
-3. Mock the Prisma calls the route will make
-4. Assert the response status and body
+### Backend
 
 ```typescript
 describe("POST /api/workspaces/:workspaceId/shifts", () => {
@@ -396,11 +318,7 @@ describe("POST /api/workspaces/:workspaceId/shifts", () => {
 });
 ```
 
-### Adding a frontend test
-
-1. Add MSW handlers to `handlers.ts` for any new API endpoints
-2. Create a new test file in the appropriate folder
-3. Use `renderWithProviders` and `setAuthenticatedUser` as needed
+### Frontend
 
 ```typescript
 it('renders the shift calendar', async () => {
@@ -412,11 +330,9 @@ it('renders the shift calendar', async () => {
 })
 ```
 
-### Adding an E2E test
+### E2E
 
-1. Add the scenario to `e2e/seed.ts` if new test data is needed
-2. Create a new spec file or add to an existing one
-3. Use the `authenticatedPage` fixture for tests that require login
+Add data to `e2e/seed.ts` if the test needs specific state, then add a spec:
 
 ```typescript
 test("manager can generate a schedule", async ({ authenticatedPage: page }) => {
