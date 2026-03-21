@@ -109,6 +109,11 @@ jobs:
         env:
           VITE_API_URL: http://localhost:3001
 
+      - name: Apply migrations to E2E database
+        run: cd backend && npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+
       - name: Reset and seed E2E test database
         run: npx tsx e2e/seed.ts
         env:
