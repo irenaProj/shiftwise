@@ -74,8 +74,9 @@ function AddWindowForm({
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
         <div>
-          <label className="label">Day</label>
+          <label htmlFor="availability-day" className="label">Day</label>
           <select
+            id="availability-day"
             className="input"
             value={form.dayOfWeek}
             onChange={(e) => setForm(f => ({ ...f, dayOfWeek: e.target.value }))}
@@ -86,8 +87,9 @@ function AddWindowForm({
           </select>
         </div>
         <div>
-          <label className="label">From</label>
+          <label htmlFor="availability-from" className="label">From</label>
           <input
+            id="availability-from"
             type="time"
             className="input"
             value={form.startTime}
@@ -96,8 +98,9 @@ function AddWindowForm({
           />
         </div>
         <div>
-          <label className="label">To</label>
+          <label htmlFor="availability-to" className="label">To</label>
           <input
+            id="availability-to"
             type="time"
             className="input"
             value={form.endTime}

@@ -123,8 +123,9 @@ function UpsertSlotForm({ workspaceId }: { workspaceId: string }) {
       <h2 className="text-base font-semibold text-slate-900 mb-4">Set demand</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="label">Day</label>
+          <label htmlFor="forecast-day" className="label">Day</label>
           <select
+            id="forecast-day"
             className="input"
             value={form.dayOfWeek}
             onChange={(e) => setForm(f => ({ ...f, dayOfWeek: e.target.value }))}
@@ -135,8 +136,9 @@ function UpsertSlotForm({ workspaceId }: { workspaceId: string }) {
           </select>
         </div>
         <div>
-          <label className="label">Time slot</label>
+          <label htmlFor="forecast-time" className="label">Time slot</label>
           <select
+            id="forecast-time"
             className="input"
             value={form.time}
             onChange={(e) => setForm(f => ({ ...f, time: e.target.value }))}
@@ -147,8 +149,9 @@ function UpsertSlotForm({ workspaceId }: { workspaceId: string }) {
           </select>
         </div>
         <div>
-          <label className="label">Employees required</label>
+          <label htmlFor="forecast-required" className="label">Employees required</label>
           <input
+            id="forecast-required"
             type="number"
             min={1}
             className="input"

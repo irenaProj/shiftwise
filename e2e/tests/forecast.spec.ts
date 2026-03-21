@@ -15,8 +15,8 @@ test.describe("Forecast", () => {
 
   test("shows required count badges", async ({ authenticatedPage: page }) => {
     // Slot with required=3 at 09:00 Mon — scope to table to avoid matching the legend
-    await expect(page.locator("table").getByText("3")).toBeVisible();
-    await expect(page.locator("table").getByText("2")).toBeVisible();
+    await expect(page.locator("table").getByText("3×")).toBeVisible();
+    await expect(page.locator("table").getByText("2×")).toBeVisible();
   });
 
   test("shows Set demand form for managers", async ({
