@@ -37,8 +37,15 @@ jobs:
         run: npm ci
       - name: Generate Prisma client
         run: cd backend && npx prisma generate
-      - name: Run tests
-        run: cd backend && npm test
+      - name: Run tests with coverage
+        run: cd backend && npm run test:coverage
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./backend/coverage/lcov.info
+          flags: backend
+          name: backend
 
   frontend:
     name: Frontend — type check & build
@@ -66,8 +73,15 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Run tests
-        run: cd frontend && npm test
+      - name: Run tests with coverage
+        run: cd frontend && npm run test:coverage
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend
 
   e2e:
     name: E2E — Playwright (isolated test backend)
@@ -117,20 +131,6 @@ jobs:
         run: |
           npx wait-on http://localhost:3001/api/health http://localhost:4173 --timeout 60000
           sleep 2
-
-      - name: Debug — verify servers and test login
-        run: |
-          echo "=== Backend health ==="
-          curl -s http://localhost:3001/api/health
-          echo ""
-          echo "=== Frontend status ==="
-          curl -s -o /dev/null -w "%{http_code}" http://localhost:4173
-          echo ""
-          echo "=== Test login ==="
-          curl -s -X POST http://localhost:3001/api/auth/login \
-            -H "Content-Type: application/json" \
-            -d '{"email":"will.power@demo.com","password":"password123"}'
-          echo ""
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps

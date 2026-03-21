@@ -6,6 +6,8 @@
 **API:** https://shiftwise-0sin.onrender.com/api/health  
 **Docs:** https://irenaproj.github.io/shiftwise/
 
+[![codecov](https://codecov.io/gh/irenaProj/shiftwise/graph/badge.svg?token=2b4cbc14-3254-43d9-9698-e1730b4ef8e4)](https://codecov.io/gh/irenaProj/shiftwise)
+
 ---
 
 ## What this is
@@ -58,7 +60,7 @@ cd .. && npm run dev
 ## Documentation
 
 | Doc                                                              | Description                                   |
-| ------------------------------------------------------------     | --------------------------------------------- |
+| ---------------------------------------------------------------- | --------------------------------------------- |
 | [Architecture](docs/architecture.md)                             | System design, data model, monorepo structure |
 | [API Reference](docs/api.md)                                     | Endpoints, auth, error codes                  |
 | [Testing](docs/testing.md)                                       | Test strategy, running tests, CI              |

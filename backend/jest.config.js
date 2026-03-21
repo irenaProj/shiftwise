@@ -9,6 +9,7 @@ const config = {
     '^@shiftwise/dates$': '<rootDir>/../../packages/dates/src/index.ts',
   },
   clearMocks: true,
+  coverageReporters: ['text', 'lcov'],
   collectCoverageFrom: [
     '**/*.ts',
     '!**/tests/**',
